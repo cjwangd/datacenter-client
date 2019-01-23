@@ -17,14 +17,20 @@
 package com.cares.osbtest;
 
 import cn.sh.cares.datacenterclient.client.DcsClient;
+
 import cn.sh.cares.datacenterclient.client.IMsgResolver;
+
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.context.annotation.Bean;
+
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
 @Configuration
+
+
 public class config {
 
     @Value("${datacenter.url}")
