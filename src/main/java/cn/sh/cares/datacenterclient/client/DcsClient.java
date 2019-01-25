@@ -119,7 +119,6 @@ public class DcsClient implements InitializingBean {
                         marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
                         m.getBody().setSeqNum(new Long(atomicLong.addAndGet(1L)).toString());
                         StringWriter writer = new StringWriter();
-                        m.getBody().setSeqNum(new Long(atomicLong.addAndGet(1L)).toString());
                         marshaller.marshal(m, writer);
                         logger.debug("发送请求::{}", writer.toString());
                         RequestBody requestBody = RequestBody.create(mediaType, writer.toString());
