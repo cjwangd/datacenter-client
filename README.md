@@ -1,8 +1,7 @@
-# datacenter-client
-数据中心客户端
+#数据中心客户端
 
 
-1、引入依赖
+##1、引入依赖
 
       <dependency>
             <groupId>cn.sh.cares</groupId>
@@ -11,7 +10,7 @@
       </dependency>
       
       
-2、样例配置
+##2、样例配置
 
 
 package com.cares.osbtest;
@@ -60,17 +59,18 @@ public class config {
     public class MyMsgResolver implements IMsgResolver {
         @Override
         public void resolve(String msg) {
-
+           // 自实现解析逻辑，根据消息类型和数据类型
         }
     }
 
 }
 
 
-3、消息解析需自己实现
+##3、消息解析需自己实现
+  因为消息是异步的，所以解析消息类型和数据类型做相应处理
 
 
-4、application.properties
+##4、application.properties
 
 \# 数据中心参数配置
 
