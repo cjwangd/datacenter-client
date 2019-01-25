@@ -57,6 +57,7 @@ public class DcsClient implements InitializingBean {
 
     private IMsgResolver msgResolver;
     private AtomicLong atomicLong = new AtomicLong(1);
+    private ExecutorService executorService = new ThreadPoolExecutor(10, 100, 7, TimeUnit.DAYS, new ArrayBlockingQueue<>(100));
     private Logger logger = LoggerFactory.getLogger(DcsClient.class);
 
     @Override
@@ -85,11 +86,9 @@ public class DcsClient implements InitializingBean {
                     .build());
         });
 
-        ExecutorService executorService = new ThreadPoolExecutor(10, 100, 7, TimeUnit.DAYS, new ArrayBlockingQueue<>(100));
+
         executorService.submit(new DataRequestThread());
     }
-
-
 
 
     private void sendRequest(Request request) throws IOException {
@@ -121,13 +120,23 @@ public class DcsClient implements InitializingBean {
                         m.getBody().setSeqNum(new Long(atomicLong.addAndGet(1L)).toString());
                         StringWriter writer = new StringWriter();
                         marshaller.marshal(m, writer);
-                        logger.debug("发送订阅请求::{}", writer.toString());
+                        logger.debug("发送请求::{}", writer.toString());
                         RequestBody requestBody = RequestBody.create(mediaType, writer.toString());
                         Request request = new Request.Builder()
                                 .url(url)
                                 .post(requestBody)
                                 .build();
-                        sendRequest(request);
+                        executorService.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    sendRequest(request);
+                                } catch (Exception ex) {
+
+                                }
+                            }
+                        });
+
 
                         Thread.sleep(1000);
                     } catch (Exception ex) {
@@ -144,15 +153,19 @@ public class DcsClient implements InitializingBean {
     public void setSysCode(String sysCode) {
         this.sysCode = sysCode;
     }
+
     public void setToken(String token) {
         this.token = token;
     }
+
     public void setUrl(String url) {
         this.url = url;
     }
+
     public void setMsgResolver(IMsgResolver msgResolver) {
         this.msgResolver = msgResolver;
     }
+
     public void setDatatypes(List<String> datatypes) {
         this.datatypes = datatypes;
     }
