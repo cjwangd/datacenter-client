@@ -1,17 +1,19 @@
 # 数据中心客户端
 
-
+本工程是提供一个接入的参考代码，可以直接使用也可自己实现。基本逻辑是基于httppost消息和解析响应
+***
 ## 1、引入依赖
-
+```
       <dependency>
             <groupId>cn.sh.cares</groupId>
             <artifactId>datacenter-client</artifactId>
             <version>1.0.RELEASE</version>
       </dependency>
-      
-      
+```      
+***      
 ## 2、样例配置
 
+```
 
 package com.cares.osbtest;
 
@@ -64,12 +66,12 @@ public class config {
     }
 
 }
-
-
+```
+***
 ## 3、消息解析需自己实现
   因为消息是异步的，所以解析消息类型和数据类型做相应处理
 
-
+***
 ## 4、application.properties
 
 \# 数据中心参数配置
