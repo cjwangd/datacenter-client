@@ -42,6 +42,11 @@ public class MqMessageBuilder {
         return this;
     }
 
+    public MqMessageBuilder dataType(String dataType) {
+        this.mqMessageBody.setDataType(dataType);
+        return this;
+    }
+
     public MqMessageBuilder token(String token) {
         this.mqMessageHeader.setToken(token);
         return this;
