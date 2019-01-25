@@ -70,5 +70,18 @@ public class config {
 3、消息解析需自己实现
 
 
+4、application.properties
+
+\# 数据中心参数配置
+
+datacenter.url=http://127.0.0.1/dcs/services
+
+datacenter.syscode=NJWX
+
+datacenter.token=token
+
+datacenter.datatype=odsSmislk,odsSimsScs
+
+
 
    
