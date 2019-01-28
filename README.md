@@ -18,20 +18,15 @@
 package com.cares.osbtest;
 
 import cn.sh.cares.datacenterclient.client.DcsClient;
-
 import cn.sh.cares.datacenterclient.client.IMsgResolver;
-
 import org.springframework.beans.factory.annotation.Value;
-
 import org.springframework.context.annotation.Bean;
-
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Configuration
-
-
 public class config {
 
     @Value("${datacenter.url}")
@@ -46,6 +41,8 @@ public class config {
     @Value("#{'${datacenter.datatype}'.split(',')}")
     private List<String> datatypes;
 
+    private AtomicLong atomicLong = new AtomicLong(1L);
+
 
     @Bean
     DcsClient dcsClient() {
@@ -58,10 +55,30 @@ public class config {
         return dcsClient;
     }
 
+    /**
+     * 自定义消息实现
+     */
     public class MyMsgResolver implements IMsgResolver {
+
+        /**
+         * 解析异步消息
+         * 消息格式参考接口文档
+         * 必须提供实现
+         * @param msg
+         */
         @Override
         public void resolve(String msg) {
-           // 自实现解析逻辑，根据消息类型和数据类型
+
+        }
+
+        /**
+         * 全局唯一消息序列
+         * 必须提供实现
+         * @return
+         */
+        @Override
+        public String getUniqueSeq() {
+            return atomicLong.getAndIncrement()+"";
         }
     }
 

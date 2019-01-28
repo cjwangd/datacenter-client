@@ -11,4 +11,10 @@ public interface IMsgResolver {
      * @param msg
      */
     void resolve(String msg);
+
+    /**
+     * 获取消息唯一序列
+     * @return
+     */
+    String getUniqueSeq();
 }
