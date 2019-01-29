@@ -7,7 +7,7 @@
       <dependency>
             <groupId>cn.sh.cares</groupId>
             <artifactId>datacenter-client</artifactId>
-            <version>1.0.RELEASE</version>
+            <version>LATEST</version>
       </dependency>
 ```      
 ***      
