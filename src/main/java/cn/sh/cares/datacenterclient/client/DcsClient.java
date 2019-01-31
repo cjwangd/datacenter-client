@@ -22,6 +22,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
+import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,9 +35,10 @@ import java.util.concurrent.ExecutorService;
 @Scope("singleton")
 public class DcsClient implements InitializingBean {
 
-    public static final String APPLICATION_XML_VALUE = "application/xml";
+    public static final String APPLICATION_XML_VALUE = "application/xml;charset=UTF-8";
     private static OkHttpClient okHttpClient = new OkHttpClient();
     private static MediaType mediaType = MediaType.parse(APPLICATION_XML_VALUE);
+
     /**
      * 系统代码
      **/
@@ -70,9 +72,6 @@ public class DcsClient implements InitializingBean {
     private ExecutorService executorService;
 
     private Logger logger = LoggerFactory.getLogger(DcsClient.class);
-    private JAXBContext context;
-    private Marshaller marshaller;
-    private Unmarshaller unmarshaller;
 
     {
         ThreadPoolExecutorFactoryBean executorFactoryBean = new ThreadPoolExecutorFactoryBean();
@@ -81,24 +80,12 @@ public class DcsClient implements InitializingBean {
         executorFactoryBean.setQueueCapacity(100);
         executorFactoryBean.setThreadNamePrefix("DCS::CLIENT");
         executorFactoryBean.afterPropertiesSet();
-        executorService=executorFactoryBean.getObject();
-
-        try {
-            context = JAXBContext.newInstance(
-                    MqMessage.class,
-                    MqMessageHeader.class,
-                    MqMessageBody.class, AuthMessageHeader.class, AuthMessageBody.class, AuthMessage.class);
-            marshaller = context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
-            unmarshaller = context.createUnmarshaller();
-            unmarshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
-        } catch (Exception e) {
-
-        }
-
+        executorService = executorFactoryBean.getObject();
     }
 
-    private DcsClient(){}
+    private DcsClient() {
+    }
+
     private static DcsClient client = null;
 
     public static synchronized DcsClient getClient() {
@@ -115,7 +102,11 @@ public class DcsClient implements InitializingBean {
         Assert.notNull(msgResolver, "消息解析器不能为空");
         Assert.notNull(url, "数据中心连接地址不能为空");
         Assert.notNull(sysCode, "系统代码不能为空");
+        Assert.notNull(username, "接入用户名不能为空");
+        Assert.notNull(password, "接入密码能为空");
+        Assert.notNull(datatypes, "订阅数据不能为空");
 
+        login();
         msgs = new ArrayList<>(10);
         msgs.add(new MqMessageBuilder()
                 .msgType(MqMessageConstant.MsgType.HEARTBEAT_REQUEST)
@@ -134,7 +125,6 @@ public class DcsClient implements InitializingBean {
                     .dataType(d)
                     .build());
         });
-        login();
 
         if (StringUtils.isNotEmpty(token)) {
             executorService.submit(new DataRequestThread());
@@ -154,11 +144,16 @@ public class DcsClient implements InitializingBean {
                 String resp = response.body().string();
                 logger.debug("收到数据中心响应消息::{}", resp);
                 if (StringUtils.isNotEmpty(resp)) {
-                    MqMessage mqMessage = (MqMessage) unmarshaller.unmarshal(new StreamSource(resp));
+                    JAXBContext jaxbContext = JAXBContext.newInstance(MqMessage.class, MqMessageHeader.class, MqMessageBody.class);
+                    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+                    MqMessage mqMessage = (MqMessage) unmarshaller.unmarshal(new StreamSource(new ByteArrayInputStream(resp.getBytes())));
                     if (null == mqMessage) {
                         return;
-                    }else if (MqMessageConstant.MqMessageStatus.TOKENEXPIRE.getStatus().equals(mqMessage.getBody().getStatus())) {
-                        login();
+                    } else if (MqMessageConstant.MqMessageStatus.TOKENEXPIRE.getStatus().equals(mqMessage.getBody().getStatus())) {
+                        synchronized (token) {
+                            token = null;
+                            login();
+                        }
                     } else {
                         msgResolver.resolve(mqMessage);
                     }
@@ -177,7 +172,11 @@ public class DcsClient implements InitializingBean {
                 msgs.stream().forEach(m -> {
                     try {
                         m.getBody().setSeqNum(msgResolver.getUniqueSeq());
+                        m.getHeader().setToken(token);
                         StringWriter writer = new StringWriter();
+                        JAXBContext jaxbContext = JAXBContext.newInstance(MqMessage.class, MqMessageHeader.class, MqMessageBody.class);
+                        Marshaller marshaller = jaxbContext.createMarshaller();
+                        marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
                         marshaller.marshal(m, writer);
                         logger.debug("发送请求::{}", writer.toString());
                         RequestBody requestBody = RequestBody.create(mediaType, writer.toString());
@@ -237,7 +236,10 @@ public class DcsClient implements InitializingBean {
     }
 
     public void login() {
-        AuthMessage authMessage = new AuthMessage();
+        if (StringUtils.isNotEmpty(token)) {
+            return;
+        }
+        AuthMessage loginReq = new AuthMessage();
         AuthMessageHeader authMessageHeader = new AuthMessageHeader();
         AuthMessageBody authMessageBody = new AuthMessageBody();
         authMessageHeader.setReceiver(MqMessageConstant.Participate.DATACENTER.getParticipate());
@@ -245,16 +247,27 @@ public class DcsClient implements InitializingBean {
         authMessageHeader.setSendTime(new Date());
         authMessageBody.setUserName(username);
         authMessageBody.setPassWord(password);
-        authMessage.setBody(authMessageBody);
-        authMessage.setHeader(authMessageHeader);
+        loginReq.setBody(authMessageBody);
+        loginReq.setHeader(authMessageHeader);
 
         try {
             StringWriter writer = new StringWriter();
-            marshaller.marshal(authMessage, writer);
+            JAXBContext jaxbContext = JAXBContext.newInstance(AuthMessage.class, AuthMessageHeader.class, AuthMessageBody.class);
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
+            marshaller.marshal(loginReq, writer);
             logger.debug("发送请求::{}", writer.toString());
             RequestBody requestBody = RequestBody.create(mediaType, writer.toString());
+            String loginurl = "";
+            if (url.endsWith("/")) {
+                loginurl = url + "login";
+            } else {
+                loginurl = url + "/login";
+            }
+
             Request request = new Request.Builder()
-                    .url(url)
+                    .url(loginurl)
                     .post(requestBody)
                     .build();
             if (null != okHttpClient && null != request) {
@@ -264,17 +277,20 @@ public class DcsClient implements InitializingBean {
                     String resp = response.body().string();
 
                     if (StringUtils.isNotEmpty(resp)) {
-                        AuthMessage authresp = (AuthMessage) unmarshaller.unmarshal(new StreamSource(resp));
-                        token = authresp.getBody().getToken();
-                        if (StringUtils.isEmpty(token)) {
-                            logger.debug("登录失败");
-                        } else {
-                            logger.debug("登录成功，收到数据中心认证token::{}", token);
+                        AuthMessage authresp = (AuthMessage) unmarshaller.unmarshal(new StreamSource(new ByteArrayInputStream(resp.getBytes())));
+                        if ("000".equals(authresp.getBody().getCode())) {
+                            token = authresp.getBody().getToken();
+                            if (StringUtils.isEmpty(token)) {
+                                logger.debug("登录失败");
+                            } else {
+                                logger.debug("登录成功，收到数据中心认证token::{}", token);
+                            }
                         }
                     }
                 }
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
     }
