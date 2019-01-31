@@ -19,6 +19,8 @@ package com.cares.osbtest;
 
 import cn.sh.cares.datacenterclient.client.DcsClient;
 import cn.sh.cares.datacenterclient.client.IMsgResolver;
+import cn.sh.cares.datacenterclient.message.MqMessage;
+import com.alibaba.fastjson.JSON;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,8 +37,11 @@ public class config {
     @Value("${datacenter.syscode}")
     private String syscode;
 
-    @Value("${datacenter.token}")
-    private String token;
+    @Value("${datacenter.username}")
+    private String username;
+
+    @Value("${datacenter.password}")
+    private String password;
 
     @Value("#{'${datacenter.datatype}'.split(',')}")
     private List<String> datatypes;
@@ -46,11 +51,12 @@ public class config {
 
     @Bean
     DcsClient dcsClient() {
-        DcsClient dcsClient = new DcsClient();
+        DcsClient dcsClient = DcsClient.getClient();
         dcsClient.setUrl(url);
         dcsClient.setDatatypes(datatypes);
         dcsClient.setSysCode(syscode);
-        dcsClient.setToken(token);
+        dcsClient.setUsername(username);
+        dcsClient.setPassword(password);
         dcsClient.setMsgResolver(new MyMsgResolver());
         return dcsClient;
     }
@@ -67,8 +73,8 @@ public class config {
          * @param msg
          */
         @Override
-        public void resolve(String msg) {
-
+        public void resolve(MqMessage msg) {
+            System.out.println(JSON.toJSONString(msg));
         }
 
         /**
@@ -83,6 +89,7 @@ public class config {
     }
 
 }
+
 ```
 ***
 ## 3、消息解析需自己实现
@@ -91,13 +98,16 @@ public class config {
 ***
 ## 4、application.properties
 
-\# 数据中心参数配置
+
+\# 数据中心参数配置 
 
 datacenter.url=http://127.0.0.1/dcs/services
 
 datacenter.syscode=NJWX
 
-datacenter.token=token
+datacenter.username=NJWX
+
+datacenter.password=123456
 
 datacenter.datatype=odsSmislk,odsSimsScs
 
