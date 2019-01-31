@@ -12,7 +12,7 @@ public interface IMsgResolver {
      *
      * @param msg
      */
-    void resolve(MqMessage msg);
+    void resolve(String msg);
 
     /**
      * 获取消息唯一序列

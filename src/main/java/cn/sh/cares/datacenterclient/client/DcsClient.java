@@ -155,7 +155,7 @@ public class DcsClient implements InitializingBean {
                             login();
                         }
                     } else {
-                        msgResolver.resolve(mqMessage);
+                        msgResolver.resolve(resp);
                     }
                 }
             }
