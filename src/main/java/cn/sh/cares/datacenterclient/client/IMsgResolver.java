@@ -1,10 +1,7 @@
 package cn.sh.cares.datacenterclient.client;
 
-import cn.sh.cares.datacenterclient.message.MqMessage;
-import com.alibaba.fastjson.JSONObject;
-
 /**
- * 数据中心消息解析接口，由接入方自己实现
+ * 数据共享平台消息解析接口，由接入方自己实现
  */
 public interface IMsgResolver {
 

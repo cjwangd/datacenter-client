@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.sh.cares</groupId>
     <artifactId>datacenter-client</artifactId>
-    <version>2.2.RELEASE</version>
+    <version>2.4.RELEASE</version>
     <name>datacenter-client</name>
-    <description>数据中心JAVA客户端</description>
+    <description>数据共享平台JAVA客户端</description>
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
@@ -33,6 +33,10 @@
             <name>王长金</name>
             <email>wangcj@mail.cares.sh.cn</email>
             <organization>上海民航华东凯亚系统集成有限公司</organization>
+            <organizationUrl>http://hdcares.travelsky.net/</organizationUrl>
+            <roles>
+                <role>开发</role>
+            </roles>
         </developer>
     </developers>
 
@@ -41,57 +45,20 @@
         <java.version>1.8</java.version>
     </properties>
 
-
-    <dependencyManagement>
-        <dependencies>
-            <!-- Import dependency management from Spring Boot -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <type>pom</type>
-                <scope>import</scope>
-                <version>2.1.2.RELEASE</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>3.12.1</version>
-            <scope>provided</scope>
-        </dependency>
 
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>1.2.49</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.8.1</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -116,7 +83,7 @@
                 </configuration>
             </plugin>
 
-<!--            <plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.6</version>
@@ -129,7 +96,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
 
             <!--配置生成Javadoc包-->
             <plugin>

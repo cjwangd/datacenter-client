@@ -1,4 +1,4 @@
-# 数据中心客户端
+# 数据共享平台客户端
 
 本工程是提供一个接入的参考代码，可以直接使用也可自己实现。基本逻辑是基于httppost消息和解析响应
 ***
@@ -99,7 +99,7 @@ public class config {
 ## 4、application.properties
 
 
-\# 数据中心参数配置 
+\# 数据共享平台参数配置 
 
 datacenter.url=http://127.0.0.1/dcs/services
 

@@ -1,5 +1,6 @@
 package cn.sh.cares.datacenterclient.client;
 
+import cn.sh.cares.datacenterclient.HttpUtils;
 import cn.sh.cares.datacenterclient.common.MqMessageConstant;
 import cn.sh.cares.datacenterclient.message.MqMessage;
 import cn.sh.cares.datacenterclient.message.MqMessageBody;
@@ -8,18 +9,9 @@ import cn.sh.cares.datacenterclient.message.MqMessageHeader;
 import cn.sh.cares.datacenterclient.message.auth.AuthMessage;
 import cn.sh.cares.datacenterclient.message.auth.AuthMessageBody;
 import cn.sh.cares.datacenterclient.message.auth.AuthMessageHeader;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.annotation.Scope;
-import org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean;
-import org.springframework.util.Assert;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
@@ -29,17 +21,18 @@ import java.io.StringWriter;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 /**
- * 数据中心java 客户端
+ * 数据共享平台java 客户端
  */
-@Scope("singleton")
-public class DcsClient implements InitializingBean {
+public class DcsClient {
 
-    public static final String APPLICATION_XML_VALUE = "application/xml;charset=UTF-8";
-    private static OkHttpClient okHttpClient = new OkHttpClient();
-    private static MediaType mediaType = MediaType.parse(APPLICATION_XML_VALUE);
-    private static MediaType mediaTypeJSON = MediaType.parse("application/json;charset=UTF-8");
+    Logger logger = Logger.getLogger(getClass().getName());
 
     /**
      * 系统代码
@@ -62,7 +55,7 @@ public class DcsClient implements InitializingBean {
      **/
     private String password;
     /**
-     * 数据中心连接地址
+     * 数据共享平台连接地址
      **/
     private String url;
 
@@ -83,19 +76,53 @@ public class DcsClient implements InitializingBean {
 
     private ExecutorService executorService;
 
-    private Logger logger = LoggerFactory.getLogger(DcsClient.class);
 
     {
-        ThreadPoolExecutorFactoryBean executorFactoryBean = new ThreadPoolExecutorFactoryBean();
-        executorFactoryBean.setCorePoolSize(8);
-        executorFactoryBean.setMaxPoolSize(20);
-        executorFactoryBean.setQueueCapacity(100);
-        executorFactoryBean.setThreadNamePrefix("DCS::CLIENT");
-        executorFactoryBean.afterPropertiesSet();
-        executorService = executorFactoryBean.getObject();
+        AtomicLong atomicLong = new AtomicLong(1);
+        executorService = Executors.newCachedThreadPool(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r);
+                thread.setName("DCS::CLIENT"+atomicLong.getAndIncrement());
+                return thread;
+            }
+        });
     }
 
     private DcsClient() {
+
+    }
+
+    private void checkParam(){
+        if (null == msgResolver) {
+            logger.severe("消息解析器不能为空");
+            System.exit(-1);
+        }
+
+        if ("".equals(url) || null == url) {
+            logger.severe("数据共享平台连接地址不能为空");
+            System.exit(-1);
+        }
+
+        if ("".equals(sysCode) || null == sysCode) {
+            logger.severe("系统代码不能为空");
+            System.exit(-1);
+        }
+
+        if ("".equals(username) || null == username) {
+            logger.severe("接入用户名不能为空");
+            System.exit(-1);
+        }
+
+        if ("".equals(password) || null == password) {
+            logger.severe("接入密码能为空");
+            System.exit(-1);
+        }
+
+        if ("".equals(datatypes) || null == datatypes) {
+            logger.severe("订阅数据不能为空");
+            System.exit(-1);
+        }
     }
 
     private static DcsClient client = null;
@@ -107,28 +134,17 @@ public class DcsClient implements InitializingBean {
         return client;
     }
 
-
-    @Override
-    public void afterPropertiesSet() {
-
-        Assert.notNull(msgResolver, "消息解析器不能为空");
-        Assert.notNull(url, "数据中心连接地址不能为空");
-        Assert.notNull(sysCode, "系统代码不能为空");
-        Assert.notNull(username, "接入用户名不能为空");
-        Assert.notNull(password, "接入密码能为空");
-        Assert.notNull(datatypes, "订阅数据不能为空");
-
-
-
-    }
-
     public void start() {
+
+        // 校验参数
+        checkParam();
+
         // 登录数据共享平台
         login();
 
         // 发送订阅消息
         if (!subscribe()) {
-            logger.error("发送订阅失败");
+            logger.severe("发送订阅失败");
             System.exit(-9);
         }
 
@@ -150,37 +166,31 @@ public class DcsClient implements InitializingBean {
                     .dataType(datatypes)
                     .build()));
         } else {
-            logger.debug("登录数据中心失败，请检查");
+            logger.severe("登录数据共享平台失败，请检查");
             System.exit(-2);
         }
     }
 
 
-    private void sendRequest(Request request) throws Exception {
-        if (null != okHttpClient && null != request) {
-            //执行请求，得到响应
-            Response response = okHttpClient.newCall(request).execute();
-            if (HttpServletResponse.SC_OK == response.code()) {
-                String resp = response.body().string();
-                logger.debug("收到数据中心响应消息::{}", resp);
-                if (StringUtils.isNotEmpty(resp)) {
-                    JAXBContext jaxbContext = JAXBContext.newInstance(MqMessage.class,
-                            MqMessageHeader.class, MqMessageBody.class);
-                    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-                    MqMessage mqMessage = (MqMessage) unmarshaller.unmarshal(
-                            new StreamSource(new ByteArrayInputStream(resp.getBytes())));
-                    if (null == mqMessage) {
-                        return;
-                    } else if (MqMessageConstant.MqMessageStatus.TOKENEXPIRE
-                            .getStatus().equals(mqMessage.getBody().getStatus())) {
-                        synchronized (token) {
-                            token = null;
-                            login();
-                        }
-                    } else {
-                        msgResolver.resolve(resp);
-                    }
+    private void sendRequest(String request) throws Exception {
+        String resp = HttpUtils.sendRequestXml(url,request);
+        logger.info("收到数据共享平台响应消息::"+resp);
+        if (StringUtils.isNotEmpty(resp)) {
+            JAXBContext jaxbContext = JAXBContext.newInstance(MqMessage.class,
+                    MqMessageHeader.class, MqMessageBody.class);
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            MqMessage mqMessage = (MqMessage) unmarshaller.unmarshal(
+                    new StreamSource(new ByteArrayInputStream(resp.getBytes())));
+            if (null == mqMessage) {
+                return;
+            } else if (MqMessageConstant.MqMessageStatus.TOKENEXPIRE
+                    .getStatus().equals(mqMessage.getBody().getStatus())) {
+                synchronized (token) {
+                    token = null;
+                    login();
                 }
+            } else {
+                msgResolver.resolve(resp);
             }
         }
     }
@@ -201,10 +211,10 @@ public class DcsClient implements InitializingBean {
             while (true) {
                 try {
                     String msg = getMsgXml(heart);
-                    logger.debug("发送心跳请求::{}", msg);
+                    logger.info("发送心跳请求::"+msg);
                     executorService.submit(() -> {
                         try {
-                            sendRequest(getHttpReq(msg));
+                            sendRequest(msg);
                         } catch (Exception ex) {
 
                         }
@@ -236,10 +246,10 @@ public class DcsClient implements InitializingBean {
             while (true) {
                 try {
                     String msg = getMsgXml(data);
-                    logger.debug("发送订阅请求::{}", msg);
+                    logger.info("发送订阅请求::"+msg);
                     executorService.submit(() -> {
                         try {
-                            sendRequest(getHttpReq(msg));
+                            sendRequest(msg);
                         } catch (Exception ex) {
 
                         }
@@ -254,12 +264,6 @@ public class DcsClient implements InitializingBean {
 
     }
 
-    private Request getHttpReq(String msg) {
-        RequestBody requestBody = RequestBody.create(mediaType, msg);
-        return new Request.Builder().url(url).post(requestBody)
-                .build();
-
-    }
 
     private String getMsgXml(MqMessage mqMessage) throws Exception {
         mqMessage.getBody().setSeqNum(msgResolver.getUniqueSeq());
@@ -364,45 +368,35 @@ public class DcsClient implements InitializingBean {
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
             marshaller.marshal(loginReq, writer);
-            logger.debug("发送请求::{}", writer.toString());
-            RequestBody requestBody = RequestBody.create(mediaType, writer.toString());
+            logger.info("发送登录请求::"+writer.toString());
             String loginurl = "";
             if (url.endsWith("/")) {
                 loginurl = url + "login";
             } else {
                 loginurl = url + "/login";
             }
+            String resp = HttpUtils.sendRequestXml(loginurl, writer.toString());
 
-            Request request = new Request.Builder()
-                    .url(loginurl)
-                    .post(requestBody)
-                    .build();
-            if (null != okHttpClient && null != request) {
-                //执行请求，得到响应
-                Response response = okHttpClient.newCall(request).execute();
-                if (HttpServletResponse.SC_OK == response.code()) {
-                    String resp = response.body().string();
-
-                    if (StringUtils.isNotEmpty(resp)) {
-                        AuthMessage authresp = (AuthMessage) unmarshaller.unmarshal(
-                                new StreamSource(new ByteArrayInputStream(resp.getBytes())));
-                        if ("000".equals(authresp.getBody().getCode())) {
-                            token = authresp.getBody().getToken();
-                            if (StringUtils.isEmpty(token)) {
-                                logger.debug("登录失败");
-                            } else {
-                                logger.debug("登录成功，收到数据中心认证token::{}", token);
-                            }
-                        }
+            if (StringUtils.isNotEmpty(resp)) {
+                AuthMessage authresp = (AuthMessage) unmarshaller.unmarshal(
+                        new StreamSource(new ByteArrayInputStream(resp.getBytes())));
+                if ("000".equals(authresp.getBody().getCode())) {
+                    token = authresp.getBody().getToken();
+                    if (StringUtils.isEmpty(token)) {
+                        logger.info("登录失败");
+                    } else {
+                        logger.info("登录成功，收到数据共享平台认证token::"+token);
                     }
                 }
+            }else{
+                logger.info("登录失败");
+                System.exit(-2);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
     }
-
 
     /**
      * 发送订阅
@@ -428,30 +422,20 @@ public class DcsClient implements InitializingBean {
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
             marshaller.marshal(subs, writer);
-            logger.debug("发送订阅请求::{}", writer.toString());
-            RequestBody requestBody = RequestBody.create(mediaType, writer.toString());
-            String loginurl = url;
-            Request request = new Request.Builder()
-                    .url(loginurl)
-                    .post(requestBody)
-                    .build();
+            logger.info("发送订阅请求::"+writer.toString());
+            String resp = HttpUtils.sendRequestXml(url, writer.toString());
 
-            if (null != okHttpClient && null != request) {
-                //执行请求，得到响应
-                Response response = okHttpClient.newCall(request).execute();
-                if (HttpServletResponse.SC_OK == response.code()) {
-                    String resp = response.body().string();
-
-                    if (StringUtils.isNotEmpty(resp)) {
-                        logger.debug("订阅请求成功，收到数据中心响应{}", resp);
-                        MqMessage subsRsp = (MqMessage) unmarshaller.unmarshal(
-                                new StreamSource(new ByteArrayInputStream(resp.getBytes())));
-                        if (MqMessageConstant.MqMessageStatus.ACCEPT.getStatus().equals(subsRsp.getBody().getStatus())){
-                            return true;
-                        }
-
-                    }
+            if (StringUtils.isNotEmpty(resp)) {
+                logger.info("订阅请求成功，收到数据共享平台响应::"+resp);
+                MqMessage subsRsp = (MqMessage) unmarshaller.unmarshal(
+                        new StreamSource(new ByteArrayInputStream(resp.getBytes())));
+                if (MqMessageConstant.MqMessageStatus.ACCEPT.getStatus().equals(subsRsp.getBody().getStatus())){
+                    return true;
                 }
+
+            }else{
+                logger.info("订阅请求失败");
+                System.exit(-2);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -462,18 +446,12 @@ public class DcsClient implements InitializingBean {
 
     /**
      * 获取接口数据
-     *
-     * @param serviceCode
      * @param params
+     * @param serviceCode
      * @return
      */
-    public JSONObject getApiData(String serviceCode, JSONObject params) {
-        JSONObject jsonObject = null;
-        JSONObject reqbody = new JSONObject();
-        reqbody.put("serviceCode", serviceCode);
-        reqbody.put("token", token);
-        reqbody.put("params", params);
-        RequestBody requestBody = RequestBody.create(mediaTypeJSON, reqbody.toString());
+    public String getApiData(JSONObject params,String serviceCode) {
+
         String apiUrl;
         if (url.endsWith("/")) {
             apiUrl = url + "api";
@@ -481,25 +459,11 @@ public class DcsClient implements InitializingBean {
             apiUrl = url + "/api";
         }
 
-        Request request = new Request.Builder()
-                .url(apiUrl)
-                .post(requestBody)
-                .build();
-        if (null != okHttpClient && null != request) {
-            //执行请求，得到响应
-            try {
-                Response response = okHttpClient.newCall(request).execute();
-                if (HttpServletResponse.SC_OK == response.code()) {
-                    String resp = response.body().string();
+        JSONObject reqbody = new JSONObject();
+        reqbody.put("serviceCode", serviceCode);
+        reqbody.put("token", token);
+        reqbody.put("params", params);
 
-                    if (StringUtils.isNotEmpty(resp)) {
-                        jsonObject = JSON.parseObject(resp);
-                    }
-                }
-            } catch (Exception ex) {
-                return null;
-            }
-        }
-        return jsonObject;
+        return  HttpUtils.sendRequestJson(apiUrl, reqbody.toJSONString());
     }
 }
