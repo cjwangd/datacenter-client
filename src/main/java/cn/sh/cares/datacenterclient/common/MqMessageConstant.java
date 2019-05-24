@@ -16,6 +16,12 @@ public class MqMessageConstant {
 		
 		//心跳应答消息
 		public static final String HEARTBEAT_RESPONES="heartBeatRespones";
+
+		//数据请求消息
+		public static final String DATA_REQUEST="dataRequest";
+
+		//数据应答消息
+		public static final String DATA_RESPONES="dataRespones";
 				
 	}
 	
