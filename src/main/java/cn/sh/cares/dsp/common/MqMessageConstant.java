@@ -1,4 +1,4 @@
-package cn.sh.cares.datacenterclient.common;
+package cn.sh.cares.dsp.common;
 
 public class MqMessageConstant {
 	

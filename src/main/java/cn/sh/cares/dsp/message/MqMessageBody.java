@@ -1,4 +1,4 @@
-package cn.sh.cares.datacenterclient.message;
+package cn.sh.cares.dsp.message;
 
 import javax.xml.bind.annotation.*;
 import java.util.List;

@@ -17,9 +17,9 @@
 
 package com.cares.osbtest;
 
-import cn.sh.cares.datacenterclient.client.DcsClient;
-import cn.sh.cares.datacenterclient.client.IMsgResolver;
-import cn.sh.cares.datacenterclient.message.MqMessage;
+import cn.sh.cares.dsp.client.DcsClient;
+import cn.sh.cares.dsp.client.IMsgResolver;
+import cn.sh.cares.dsp.message.MqMessage;
 import com.alibaba.fastjson.JSON;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

@@ -1,4 +1,4 @@
-package cn.sh.cares.datacenterclient.message;
+package cn.sh.cares.dsp.message;
 
 import java.util.Date;
 

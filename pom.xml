@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.sh.cares</groupId>
-    <artifactId>datacenter-client</artifactId>
-    <version>2.4.RELEASE</version>
-    <name>datacenter-client</name>
+    <artifactId>dsp-client</artifactId>
+    <version>2.5.RELEASE</version>
+    <name>dsp-client</name>
     <description>数据共享平台JAVA客户端</description>
 
     <parent>
@@ -48,18 +48,12 @@
     <dependencies>
 
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>1.2.49</version>
-            <scope>compile</scope>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>LATEST</version>
+            <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.8.1</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>

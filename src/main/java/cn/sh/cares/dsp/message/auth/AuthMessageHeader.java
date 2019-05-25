@@ -1,6 +1,6 @@
-package cn.sh.cares.datacenterclient.message.auth;
+package cn.sh.cares.dsp.message.auth;
 
-import cn.sh.cares.datacenterclient.message.adapters.XMLDateAdapter;
+import cn.sh.cares.dsp.message.adapters.XMLDateAdapter;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

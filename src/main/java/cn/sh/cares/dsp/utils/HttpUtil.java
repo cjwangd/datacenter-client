@@ -1,23 +1,22 @@
-package cn.sh.cares.datacenterclient;
+package cn.sh.cares.dsp.utils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
-public class HttpUtils {
+public class HttpUtil {
 
     public static String sendRequestXml(String url,String bodyXml) {
-        Map map = new HashMap(1);
+        Map<String,String> map = new HashMap<>(1);
         map.put("Content-Type", "application/xml;charset=UTF-8");
         return  sendHttp(url, bodyXml, map);
 
     }
 
     public static String sendRequestJson(String url,String bodyJson) {
-        Map map = new HashMap(1);
+        Map<String,String> map = new HashMap<>(1);
         map.put("Content-Type", "application/json;charset=UTF-8");
         return  sendHttp(url, bodyJson, map);
     }

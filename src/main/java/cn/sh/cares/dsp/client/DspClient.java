@@ -1,16 +1,16 @@
-package cn.sh.cares.datacenterclient.client;
+package cn.sh.cares.dsp.client;
 
-import cn.sh.cares.datacenterclient.HttpUtils;
-import cn.sh.cares.datacenterclient.common.MqMessageConstant;
-import cn.sh.cares.datacenterclient.message.MqMessage;
-import cn.sh.cares.datacenterclient.message.MqMessageBody;
-import cn.sh.cares.datacenterclient.message.MqMessageBuilder;
-import cn.sh.cares.datacenterclient.message.MqMessageHeader;
-import cn.sh.cares.datacenterclient.message.auth.AuthMessage;
-import cn.sh.cares.datacenterclient.message.auth.AuthMessageBody;
-import cn.sh.cares.datacenterclient.message.auth.AuthMessageHeader;
-import com.alibaba.fastjson.JSONObject;
-import org.apache.commons.lang3.StringUtils;
+import cn.sh.cares.dsp.common.MqMessageConstant;
+import cn.sh.cares.dsp.message.MqMessage;
+import cn.sh.cares.dsp.message.MqMessageBody;
+import cn.sh.cares.dsp.message.MqMessageBuilder;
+import cn.sh.cares.dsp.message.MqMessageHeader;
+import cn.sh.cares.dsp.message.auth.AuthMessage;
+import cn.sh.cares.dsp.message.auth.AuthMessageBody;
+import cn.sh.cares.dsp.message.auth.AuthMessageHeader;
+import cn.sh.cares.dsp.utils.DspJson;
+import cn.sh.cares.dsp.utils.HttpUtil;
+import cn.sh.cares.dsp.utils.StringUtil;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
@@ -24,13 +24,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
  * 数据共享平台java 客户端
  */
-public class DcsClient {
+public class DspClient {
 
     Logger logger = Logger.getLogger(getClass().getName());
 
@@ -89,7 +88,7 @@ public class DcsClient {
         });
     }
 
-    private DcsClient() {
+    private DspClient() {
 
     }
 
@@ -125,11 +124,11 @@ public class DcsClient {
         }
     }
 
-    private static DcsClient client = null;
+    private static DspClient client = null;
 
-    public static synchronized DcsClient getClient() {
+    public static synchronized DspClient getClient() {
         if (null == client) {
-            client = new DcsClient();
+            client = new DspClient();
         }
         return client;
     }
@@ -148,7 +147,7 @@ public class DcsClient {
             System.exit(-9);
         }
 
-        if (StringUtils.isNotEmpty(token)) {
+        if (StringUtil.isNotEmpty(token)) {
             executorService.submit(new HeartBeatRequestThread(new MqMessageBuilder()
                     .msgType(MqMessageConstant.MsgType.HEARTBEAT_REQUEST)
                     .receiver(MqMessageConstant.Participate.DATACENTER.getParticipate())
@@ -173,9 +172,9 @@ public class DcsClient {
 
 
     private void sendRequest(String request) throws Exception {
-        String resp = HttpUtils.sendRequestXml(url,request);
+        String resp = HttpUtil.sendRequestXml(url,request);
         logger.info("收到数据共享平台响应消息::"+resp);
-        if (StringUtils.isNotEmpty(resp)) {
+        if (StringUtil.isNotEmpty(resp)) {
             JAXBContext jaxbContext = JAXBContext.newInstance(MqMessage.class,
                     MqMessageHeader.class, MqMessageBody.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -346,7 +345,7 @@ public class DcsClient {
     }
 
     public void login() {
-        if (StringUtils.isNotEmpty(token)) {
+        if (StringUtil.isNotEmpty(token)) {
             return;
         }
         AuthMessage loginReq = new AuthMessage();
@@ -375,14 +374,14 @@ public class DcsClient {
             } else {
                 loginurl = url + "/login";
             }
-            String resp = HttpUtils.sendRequestXml(loginurl, writer.toString());
+            String resp = HttpUtil.sendRequestXml(loginurl, writer.toString());
 
-            if (StringUtils.isNotEmpty(resp)) {
+            if (StringUtil.isNotEmpty(resp)) {
                 AuthMessage authresp = (AuthMessage) unmarshaller.unmarshal(
                         new StreamSource(new ByteArrayInputStream(resp.getBytes())));
                 if ("000".equals(authresp.getBody().getCode())) {
                     token = authresp.getBody().getToken();
-                    if (StringUtils.isEmpty(token)) {
+                    if (StringUtil.isEmpty(token)) {
                         logger.info("登录失败");
                     } else {
                         logger.info("登录成功，收到数据共享平台认证token::"+token);
@@ -402,7 +401,7 @@ public class DcsClient {
      * 发送订阅
      */
     public boolean subscribe() {
-        if (StringUtils.isEmpty(token)) {
+        if (StringUtil.isEmpty(token)) {
             return false;
         }
         MqMessage subs = new MqMessageBuilder()
@@ -423,9 +422,9 @@ public class DcsClient {
             marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
             marshaller.marshal(subs, writer);
             logger.info("发送订阅请求::"+writer.toString());
-            String resp = HttpUtils.sendRequestXml(url, writer.toString());
+            String resp = HttpUtil.sendRequestXml(url, writer.toString());
 
-            if (StringUtils.isNotEmpty(resp)) {
+            if (StringUtil.isNotEmpty(resp)) {
                 logger.info("订阅请求成功，收到数据共享平台响应::"+resp);
                 MqMessage subsRsp = (MqMessage) unmarshaller.unmarshal(
                         new StreamSource(new ByteArrayInputStream(resp.getBytes())));
@@ -446,11 +445,10 @@ public class DcsClient {
 
     /**
      * 获取接口数据
-     * @param params
-     * @param serviceCode
+     * @param jsonbody
      * @return
      */
-    public String getApiData(JSONObject params,String serviceCode) {
+    public String getApiData(String jsonbody) {
 
         String apiUrl;
         if (url.endsWith("/")) {
@@ -459,11 +457,9 @@ public class DcsClient {
             apiUrl = url + "/api";
         }
 
-        JSONObject reqbody = new JSONObject();
-        reqbody.put("serviceCode", serviceCode);
+        DspJson reqbody = new DspJson();
         reqbody.put("token", token);
-        reqbody.put("params", params);
 
-        return  HttpUtils.sendRequestJson(apiUrl, reqbody.toJSONString());
+        return  HttpUtil.sendRequestJson(apiUrl, reqbody.toString());
     }
 }
