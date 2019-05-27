@@ -179,7 +179,7 @@ public class DspClient {
                     MqMessageHeader.class, MqMessageBody.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             MqMessage mqMessage = (MqMessage) unmarshaller.unmarshal(
-                    new StreamSource(new ByteArrayInputStream(resp.getBytes())));
+                    new StreamSource(new ByteArrayInputStream(resp.getBytes("UTF-8"))));
             if (null == mqMessage) {
                 return;
             } else if (MqMessageConstant.MqMessageStatus.TOKENEXPIRE
@@ -378,7 +378,7 @@ public class DspClient {
 
             if (StringUtil.isNotEmpty(resp)) {
                 AuthMessage authresp = (AuthMessage) unmarshaller.unmarshal(
-                        new StreamSource(new ByteArrayInputStream(resp.getBytes())));
+                        new StreamSource(new ByteArrayInputStream(resp.getBytes("UTF-8"))));
                 if ("000".equals(authresp.getBody().getCode())) {
                     token = authresp.getBody().getToken();
                     if (StringUtil.isEmpty(token)) {
@@ -427,7 +427,7 @@ public class DspClient {
             if (StringUtil.isNotEmpty(resp)) {
                 logger.info("订阅请求成功，收到数据共享平台响应::"+resp);
                 MqMessage subsRsp = (MqMessage) unmarshaller.unmarshal(
-                        new StreamSource(new ByteArrayInputStream(resp.getBytes())));
+                        new StreamSource(new ByteArrayInputStream(resp.getBytes("UTF-8"))));
                 if (MqMessageConstant.MqMessageStatus.ACCEPT.getStatus().equals(subsRsp.getBody().getStatus())){
                     return true;
                 }
