@@ -1,7 +1,6 @@
 package cn.sh.cares.dsp.message;
 
 import javax.xml.bind.annotation.*;
-import java.util.List;
 
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -16,10 +15,9 @@ public class MqMessageBody<T> {
 		
 	@XmlElement(name = "Status")
 	private String status;
-		
-	@XmlElementWrapper(name="List")
-	@XmlElement(name = "DATA")
-	private List<T> list;
+
+	@XmlElement(name = "List", required = true)
+	private List list;
 
 	
 	public String getSeqNum() {
@@ -49,11 +47,11 @@ public class MqMessageBody<T> {
 	}
 
 
-	public List<T> getList() {
+	public List getList() {
 		return list;
 	}
 
-	public void setList(List<T> list) {
+	public void setList(List list) {
 		this.list = list;
 	}
 	

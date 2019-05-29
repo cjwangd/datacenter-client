@@ -13,11 +13,13 @@ import cn.sh.cares.dsp.utils.HttpUtil;
 import cn.sh.cares.dsp.utils.StringUtil;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -75,6 +77,8 @@ public class DspClient {
 
     private ExecutorService executorService;
 
+    private boolean logEnabled = false;
+
 
     {
         AtomicLong atomicLong = new AtomicLong(1);
@@ -82,7 +86,7 @@ public class DspClient {
             @Override
             public Thread newThread(Runnable r) {
                 Thread thread = new Thread(r);
-                thread.setName("DCS::CLIENT"+atomicLong.getAndIncrement());
+                thread.setName("DCS::CLIENT" + atomicLong.getAndIncrement());
                 return thread;
             }
         });
@@ -92,34 +96,40 @@ public class DspClient {
 
     }
 
-    private void checkParam(){
+    private void checkParam() {
         if (null == msgResolver) {
-            logger.severe("消息解析器不能为空");
+            if (logEnabled)
+                logger.severe("消息解析器不能为空");
             System.exit(-1);
         }
 
         if ("".equals(url) || null == url) {
-            logger.severe("数据共享平台连接地址不能为空");
+            if (logEnabled)
+                logger.severe("数据共享平台连接地址不能为空");
             System.exit(-1);
         }
 
         if ("".equals(sysCode) || null == sysCode) {
-            logger.severe("系统代码不能为空");
+            if (logEnabled)
+                logger.severe("系统代码不能为空");
             System.exit(-1);
         }
 
         if ("".equals(username) || null == username) {
-            logger.severe("接入用户名不能为空");
+            if (logEnabled)
+                logger.severe("接入用户名不能为空");
             System.exit(-1);
         }
 
         if ("".equals(password) || null == password) {
-            logger.severe("接入密码能为空");
+            if (logEnabled)
+                logger.severe("接入密码能为空");
             System.exit(-1);
         }
 
         if ("".equals(datatypes) || null == datatypes) {
-            logger.severe("订阅数据不能为空");
+            if (logEnabled)
+                logger.severe("订阅数据不能为空");
             System.exit(-1);
         }
     }
@@ -172,8 +182,8 @@ public class DspClient {
 
 
     private void sendRequest(String request) throws Exception {
-        String resp = HttpUtil.sendRequestXml(url,request);
-        logger.info("收到数据共享平台响应消息::"+resp);
+        String resp = HttpUtil.sendRequestXml(url, request);
+
         if (StringUtil.isNotEmpty(resp)) {
             JAXBContext jaxbContext = JAXBContext.newInstance(MqMessage.class,
                     MqMessageHeader.class, MqMessageBody.class);
@@ -186,10 +196,28 @@ public class DspClient {
                     .getStatus().equals(mqMessage.getBody().getStatus())) {
                 synchronized (token) {
                     token = null;
+                    if (logEnabled)
+                        logger.severe("token 超时，重新登录");
                     login();
                 }
             } else {
-                msgResolver.resolve(resp);
+                if (MqMessageConstant.MsgType.DATA_RESPONES.equals(mqMessage.getHeader().getMsgType())) {
+
+                    if (mqMessage.getBody().getList().getItem().size() > 0) {
+                        if (logEnabled) {
+                            logger.info("收到数据共享平台数据响应消息::" + resp);
+                        }
+                        msgResolver.resolve(resp);
+                    }
+                } else if (MqMessageConstant.MsgType.HEARTBEAT_RESPONES.equals(mqMessage.getHeader().getMsgType())) {
+                    if (logEnabled)
+                        logger.info("收到数据共享平台心跳响应消息::" + resp);
+
+                } else if (MqMessageConstant.MsgType.SUBSCRIBE_RESPONES.equals(mqMessage.getHeader().getMsgType())) {
+                    logger.info("收到数据共享平台订阅响应消息::" + resp);
+
+                }
+
             }
         }
     }
@@ -210,7 +238,7 @@ public class DspClient {
             while (true) {
                 try {
                     String msg = getMsgXml(heart);
-                    logger.info("发送心跳请求::"+msg);
+                    if (logEnabled) logger.info("发送心跳请求::" + msg);
                     executorService.submit(() -> {
                         try {
                             sendRequest(msg);
@@ -245,7 +273,7 @@ public class DspClient {
             while (true) {
                 try {
                     String msg = getMsgXml(data);
-                    logger.info("发送订阅请求::"+msg);
+                    if (logEnabled) logger.info("发送数据请求::" + msg);
                     executorService.submit(() -> {
                         try {
                             sendRequest(msg);
@@ -367,7 +395,7 @@ public class DspClient {
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
             marshaller.marshal(loginReq, writer);
-            logger.info("发送登录请求::"+writer.toString());
+            logger.info("发送登录请求::" + writer.toString());
             String loginurl = "";
             if (url.endsWith("/")) {
                 loginurl = url + "login";
@@ -384,10 +412,10 @@ public class DspClient {
                     if (StringUtil.isEmpty(token)) {
                         logger.info("登录失败");
                     } else {
-                        logger.info("登录成功，收到数据共享平台认证token::"+token);
+                        logger.info("登录成功，收到数据共享平台认证token::" + token);
                     }
                 }
-            }else{
+            } else {
                 logger.info("登录失败");
                 System.exit(-2);
             }
@@ -418,33 +446,21 @@ public class DspClient {
             JAXBContext jaxbContext = JAXBContext.newInstance(MqMessage.class,
                     MqMessageHeader.class, MqMessageBody.class);
             Marshaller marshaller = jaxbContext.createMarshaller();
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
             marshaller.marshal(subs, writer);
-            logger.info("发送订阅请求::"+writer.toString());
-            String resp = HttpUtil.sendRequestXml(url, writer.toString());
+            logger.info("发送订阅请求::" + writer.toString());
+            sendRequest(writer.toString());
 
-            if (StringUtil.isNotEmpty(resp)) {
-                logger.info("订阅请求成功，收到数据共享平台响应::"+resp);
-                MqMessage subsRsp = (MqMessage) unmarshaller.unmarshal(
-                        new StreamSource(new ByteArrayInputStream(resp.getBytes("UTF-8"))));
-                if (MqMessageConstant.MqMessageStatus.ACCEPT.getStatus().equals(subsRsp.getBody().getStatus())){
-                    return true;
-                }
-
-            }else{
-                logger.info("订阅请求失败");
-                System.exit(-2);
-            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
-        return false;
+        return true;
     }
 
     /**
      * 获取接口数据
+     *
      * @param jsonbody
      * @return
      */
@@ -460,6 +476,15 @@ public class DspClient {
         DspJson reqbody = new DspJson();
         reqbody.put("token", token);
 
-        return  HttpUtil.sendRequestJson(apiUrl, reqbody.toString());
+        return HttpUtil.sendRequestJson(apiUrl, reqbody.toString());
     }
+
+    public boolean isLogEnabled() {
+        return logEnabled;
+    }
+
+    public void setLogEnabled(boolean logEnabled) {
+        this.logEnabled = logEnabled;
+    }
+
 }

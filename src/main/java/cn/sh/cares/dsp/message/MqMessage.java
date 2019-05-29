@@ -1,7 +1,6 @@
 package cn.sh.cares.dsp.message;
 
 import javax.xml.bind.annotation.*;
-import java.util.List;
 
 
 @XmlRootElement(name = "Root")
@@ -39,7 +38,7 @@ public class MqMessage<T> {
     }
 
 
-    public void setDatas(List<T> list) {
+    public void setDatas(List list) {
         body.setList(list);
     }
 
