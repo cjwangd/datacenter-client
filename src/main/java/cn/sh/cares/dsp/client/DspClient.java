@@ -19,7 +19,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -64,12 +64,12 @@ public class DspClient {
     /**
      * 心跳间隔
      */
-    private long hearbeat_inteval = 1000;
+    private long hearbeat_inteval = 60000;
 
     /**
      * 数据请求间隔
      */
-    private long datareq_inteval = 1000;
+    private long datareq_inteval = 5000;
 
     private List<MqMessage> msgs;
 
@@ -79,6 +79,8 @@ public class DspClient {
 
     private boolean logEnabled = false;
 
+    private boolean subscribed = false;
+
 
     {
         AtomicLong atomicLong = new AtomicLong(1);
@@ -86,16 +88,22 @@ public class DspClient {
             @Override
             public Thread newThread(Runnable r) {
                 Thread thread = new Thread(r);
-                thread.setName("DCS::CLIENT" + atomicLong.getAndIncrement());
+                thread.setName("DSP::CLIENT" + atomicLong.getAndIncrement());
                 return thread;
             }
         });
+
+        // 注册关闭服务钩子
+        Runtime.getRuntime().addShutdownHook(new Thread(new SendUnsubscribe()));
     }
 
     private DspClient() {
 
     }
 
+    /**
+     * 检查客户端参数
+     */
     private void checkParam() {
         if (null == msgResolver) {
             if (logEnabled)
@@ -132,9 +140,14 @@ public class DspClient {
                 logger.severe("订阅数据不能为空");
             System.exit(-1);
         }
+
+        if (hearbeat_inteval < 60000 || hearbeat_inteval > 600000) {
+            hearbeat_inteval = 60000;
+        }
     }
 
     private static DspClient client = null;
+
 
     public static synchronized DspClient getClient() {
         if (null == client) {
@@ -143,6 +156,9 @@ public class DspClient {
         return client;
     }
 
+    /**
+     * 启动客户端
+     */
     public void start() {
 
         // 校验参数
@@ -152,10 +168,8 @@ public class DspClient {
         login();
 
         // 发送订阅消息
-        if (!subscribe()) {
-            logger.severe("发送订阅失败");
-            System.exit(-9);
-        }
+        subscribe();
+
 
         if (StringUtil.isNotEmpty(token)) {
             executorService.submit(new HeartBeatRequestThread(new MqMessageBuilder()
@@ -207,7 +221,11 @@ public class DspClient {
                         if (logEnabled) {
                             logger.info("收到数据共享平台数据响应消息::" + resp);
                         }
-                        msgResolver.resolve(resp);
+                        // 防止解析线程发生异常
+                        executorService.submit(()->msgResolver.resolve(resp));
+                        this.datareq_inteval=100;
+                    }else{
+                        this.datareq_inteval=5000;
                     }
                 } else if (MqMessageConstant.MsgType.HEARTBEAT_RESPONES.equals(mqMessage.getHeader().getMsgType())) {
                     if (logEnabled)
@@ -215,6 +233,10 @@ public class DspClient {
 
                 } else if (MqMessageConstant.MsgType.SUBSCRIBE_RESPONES.equals(mqMessage.getHeader().getMsgType())) {
                     logger.info("收到数据共享平台订阅响应消息::" + resp);
+                    subscribed = true;
+
+                } else if (MqMessageConstant.MsgType.SUBSCRIBE_C_RESPONES.equals(mqMessage.getHeader().getMsgType())) {
+                    logger.info("收到数据共享平台取消订阅响应消息::" + resp);
 
                 }
 
@@ -243,7 +265,8 @@ public class DspClient {
                         try {
                             sendRequest(msg);
                         } catch (Exception ex) {
-
+                            ex.printStackTrace();
+                            logger.severe("心跳线程异常");
                         }
                     });
 
@@ -278,6 +301,12 @@ public class DspClient {
                         try {
                             sendRequest(msg);
                         } catch (Exception ex) {
+                            ex.printStackTrace();
+                            logger.severe("数据线程异常");
+                            if (ex instanceof ConnectException) {
+                                // 如果连接异常将间隔设置为3分钟
+                                datareq_inteval = 180000;
+                            }
 
                         }
                     });
@@ -348,7 +377,7 @@ public class DspClient {
         this.url = url;
     }
 
-    public long getHearbeat_inteval() {
+/*    public long getHearbeat_inteval() {
         return hearbeat_inteval;
     }
 
@@ -362,7 +391,7 @@ public class DspClient {
 
     public void setDatareq_inteval(long datareq_inteval) {
         this.datareq_inteval = datareq_inteval;
-    }
+    }*/
 
     public IMsgResolver getMsgResolver() {
         return msgResolver;
@@ -372,10 +401,12 @@ public class DspClient {
         this.msgResolver = msgResolver;
     }
 
+    // 登录
     public void login() {
         if (StringUtil.isNotEmpty(token)) {
             return;
         }
+
         AuthMessage loginReq = new AuthMessage();
         AuthMessageHeader authMessageHeader = new AuthMessageHeader();
         AuthMessageBody authMessageBody = new AuthMessageBody();
@@ -442,20 +473,62 @@ public class DspClient {
                 .build();
 
         try {
-            StringWriter writer = new StringWriter();
-            JAXBContext jaxbContext = JAXBContext.newInstance(MqMessage.class,
-                    MqMessageHeader.class, MqMessageBody.class);
-            Marshaller marshaller = jaxbContext.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
-            marshaller.marshal(subs, writer);
-            logger.info("发送订阅请求::" + writer.toString());
-            sendRequest(writer.toString());
+            String xml = genXml(subs);
+            logger.info("发送订阅请求::" + xml);
+            sendRequest(xml);
 
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
         return true;
+    }
+
+    /**
+     * 发送取消订阅
+     *
+     * @return
+     */
+    public boolean unsubscribe() {
+        if (StringUtil.isEmpty(token)) {
+            return false;
+        }
+        MqMessage subs = new MqMessageBuilder()
+                .msgType(MqMessageConstant.MsgType.SUBSCRIBE_C_REQUEST)
+                .receiver(MqMessageConstant.Participate.DATACENTER.getParticipate())
+                .sendTime(new Date())
+                .sender(sysCode)
+                .token(token)
+                .dataType(this.datatypes)
+                .build();
+
+        try {
+            String xml = genXml(subs);
+            logger.info("发送取消订阅::" + xml);
+            sendRequest(xml);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    private String genXml(MqMessage mqMessage) {
+        JAXBContext jaxbContext = null;
+        StringWriter writer = new StringWriter();
+        try {
+            jaxbContext = JAXBContext.newInstance(MqMessage.class,
+                    MqMessageHeader.class, MqMessageBody.class);
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, "utf-8");
+            marshaller.marshal(mqMessage, writer);
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        }
+        return writer.toString();
+
     }
 
     /**
@@ -474,7 +547,9 @@ public class DspClient {
         }
 
         DspJson reqbody = new DspJson();
+        reqbody.parse(jsonbody);
         reqbody.put("token", token);
+        System.out.println(reqbody.toString());
 
         return HttpUtil.sendRequestJson(apiUrl, reqbody.toString());
     }
@@ -485,6 +560,18 @@ public class DspClient {
 
     public void setLogEnabled(boolean logEnabled) {
         this.logEnabled = logEnabled;
+    }
+
+    public class SendUnsubscribe implements Runnable {
+
+        @Override
+        public void run() {
+            if (subscribed) {
+
+                unsubscribe();
+                logger.info("发送取消订阅成功");
+            }
+        }
     }
 
 }

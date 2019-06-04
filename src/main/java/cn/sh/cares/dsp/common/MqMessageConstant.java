@@ -1,56 +1,72 @@
 package cn.sh.cares.dsp.common;
 
 public class MqMessageConstant {
-	
-	
+
+
 	public class MsgType{
-		
+
 		//订阅请求消息
 		public static final String SUBSCRIBE_REQUEST="subScribeRequest";
-		
+
 		//订阅应答消息
-		public static final String SUBSCRIBE_RESPONES="subScribeRespones";
-				
+		public static final String SUBSCRIBE_RESPONES="subScribeResponse";
+
+
+		//订阅取消请求消息
+		public static final String SUBSCRIBE_C_REQUEST="subScribeCancelRequest";
+
+		//订阅取消应答消息
+		public static final String SUBSCRIBE_C_RESPONES="subScribeCancelResponse";
+
+
+
 		//心跳请求消息
 		public static final String HEARTBEAT_REQUEST="heartBeatRequest";
-		
+
 		//心跳应答消息
-		public static final String HEARTBEAT_RESPONES="heartBeatRespones";
+		public static final String HEARTBEAT_RESPONES="heartBeatResponse";
+
 
 		//数据请求消息
 		public static final String DATA_REQUEST="dataRequest";
 
 		//数据应答消息
-		public static final String DATA_RESPONES="dataRespones";
-				
+		public static final String DATA_RESPONES="dataResponse";
+
+
+
+
 	}
-	
-	
+
+
 	public class DataType{
-				
+
 		public static final String SIMS_SCS = "simsScs";
-		
+
 		public static final String SIMS_BGC = "simsBgc";
-		
+
 		public static final String SIMS_JYXLXX = "simsJyxlxx";
-		
+
 		public static final String SIMS_LKXX = "simsLkxx";
-		
-		public static final String IMF_FLIGHT = "imfFlight";	
-		
+
+		public static final String IMF_FLIGHT = "imfFlight";
+
 	}
-	
-	
-	public static final String DEFAULT_QUEUE_IN = "datacenter_queue_in";
-	
-	
-	public static final String SENDSYS_CODE ="dataCenter";
-	
+
+
+	public static final String DEFAULT_QUEUE_IN = "dsp_queue_in";
+
+
+	public static final String SENDSYS_CODE ="dsp";
+
 	public class SubscribeStaus{
-		
+
+		//初始化
+		public static final String INIT = "0";
+
 		//准备接受
 		public static final String ACCEPT = "1";
-		
+
 	}
 
 	/**
@@ -102,3 +118,4 @@ public class MqMessageConstant {
 
 
 }
+
