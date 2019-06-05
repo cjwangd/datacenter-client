@@ -20,6 +20,8 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.net.ConnectException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -80,6 +82,9 @@ public class DspClient {
     private boolean logEnabled = false;
 
     private boolean subscribed = false;
+
+    // 网络故障首次异常时间
+    private long first_net_break_down = 0L;
 
 
     {
@@ -213,6 +218,7 @@ public class DspClient {
                     if (logEnabled)
                         logger.severe("token 超时，重新登录");
                     login();
+                    subscribe();
                 }
             } else {
                 if (MqMessageConstant.MsgType.DATA_RESPONES.equals(mqMessage.getHeader().getMsgType())) {
@@ -222,10 +228,10 @@ public class DspClient {
                             logger.info("收到数据共享平台数据响应消息::" + resp);
                         }
                         // 防止解析线程发生异常
-                        executorService.submit(()->msgResolver.resolve(resp));
-                        this.datareq_inteval=100;
-                    }else{
-                        this.datareq_inteval=5000;
+                        executorService.submit(() -> msgResolver.resolve(resp));
+                        this.datareq_inteval = 100;
+                    } else {
+                        this.datareq_inteval = 5000;
                     }
                 } else if (MqMessageConstant.MsgType.HEARTBEAT_RESPONES.equals(mqMessage.getHeader().getMsgType())) {
                     if (logEnabled)
@@ -303,7 +309,9 @@ public class DspClient {
                         } catch (Exception ex) {
                             ex.printStackTrace();
                             logger.severe("数据线程异常");
-                            if (ex instanceof ConnectException) {
+                            if (ex instanceof ConnectException
+                                    || ex instanceof SocketTimeoutException
+                                    || ex instanceof SocketException) {
                                 // 如果连接异常将间隔设置为3分钟
                                 datareq_inteval = 180000;
                             }
@@ -537,7 +545,7 @@ public class DspClient {
      * @param jsonbody
      * @return
      */
-    public String getApiData(String jsonbody) {
+    public String getApiData(String jsonbody) throws Exception {
 
         String apiUrl;
         if (url.endsWith("/")) {

@@ -8,21 +8,21 @@ import java.util.Map;
 
 public class HttpUtil {
 
-    public static String sendRequestXml(String url,String bodyXml) {
+    public static String sendRequestXml(String url,String bodyXml) throws Exception {
         Map<String,String> map = new HashMap<>(1);
         map.put("Content-Type", "application/xml;charset=UTF-8");
         return  sendHttp(url, bodyXml, map);
 
     }
 
-    public static String sendRequestJson(String url,String bodyJson) {
+    public static String sendRequestJson(String url,String bodyJson) throws Exception {
         Map<String,String> map = new HashMap<>(1);
         map.put("Content-Type", "application/json;charset=UTF-8");
         return  sendHttp(url, bodyJson, map);
     }
 
 
-    private static String sendHttp(String url, String body, Map<String, String> header) {
+    private static String sendHttp(String url, String body, Map<String, String> header) throws Exception {
         InputStream in = null;
         String result = "";
         HttpURLConnection connection = null;
@@ -66,7 +66,7 @@ public class HttpUtil {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            return null;
+            throw ex;
         } finally {
             try {
                 if (in != null) {

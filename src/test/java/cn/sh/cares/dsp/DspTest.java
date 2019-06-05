@@ -20,7 +20,7 @@ public class DspTest {
     private static ScriptEngine engine = manager.getEngineByMimeType("text/javascript");
 
     @Test
-    public void test(){
+    public void test() throws Exception {
         System.out.println(DateUtil.formatDate(new Date()));
         System.out.println(DateUtil.formatDate(DateUtil.parseDate("2019-08-22 12:00:34")));
         System.out.println(HttpUtil.sendRequestJson("http://www.baidu.com",""));
