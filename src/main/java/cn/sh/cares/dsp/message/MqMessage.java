@@ -2,21 +2,23 @@ package cn.sh.cares.dsp.message;
 
 import javax.xml.bind.annotation.*;
 
-
+/**
+ * @author wangcj
+ */
 @XmlRootElement(name = "Root")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder = {"header", "body"})
-public class MqMessage<T> {
+public class MqMessage {
 
     @XmlElement(name = "Header")
     private MqMessageHeader header;
 
     @XmlElement(name = "Body")
-    private MqMessageBody<T> body;
+    private MqMessageBody body;
 
 
     public MqMessage() {
-        body = new MqMessageBody<T>();
+        body = new MqMessageBody();
     }
 
 
@@ -28,12 +30,12 @@ public class MqMessage<T> {
         this.header = header;
     }
 
-    public MqMessageBody<T> getBody() {
+    public MqMessageBody getBody() {
         return body;
     }
 
 
-    public void setBody(MqMessageBody<T> body) {
+    public void setBody(MqMessageBody body) {
         this.body = body;
     }
 

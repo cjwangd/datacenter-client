@@ -4,6 +4,9 @@ package cn.sh.cares.dsp.message;
 import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 
+/**
+ * @author wangcj
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
     "item"
@@ -17,7 +20,7 @@ public class List {
 
     public java.util.List<Item> getItem() {
         if (item == null) {
-            item = new ArrayList<Item>();
+            item = new ArrayList<>();
         }
         return this.item;
     }

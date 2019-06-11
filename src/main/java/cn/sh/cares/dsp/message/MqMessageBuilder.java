@@ -4,6 +4,7 @@ import java.util.Date;
 
 /**
  * 请求消息构建器
+ * @author wangcj
  */
 public class MqMessageBuilder {
     private MqMessage mqMessage;

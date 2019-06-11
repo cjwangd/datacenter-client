@@ -1,6 +1,6 @@
 package cn.sh.cares.dsp.message.auth;
 
-import cn.sh.cares.dsp.message.adapters.XMLDateAdapter;
+import cn.sh.cares.dsp.message.adapters.XmlDateAdapter;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -8,7 +8,9 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Date;
 
-
+/**
+ * @author wangcj
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AuthMessageHeader {
 
@@ -16,7 +18,7 @@ public class AuthMessageHeader {
 	private String sender;
 	
 	@XmlElement(name = "SendTime")
-	@XmlJavaTypeAdapter(XMLDateAdapter.class)
+	@XmlJavaTypeAdapter(XmlDateAdapter.class)
 	private Date sendTime;
 	 
 	@XmlElement(name = "Receiver")

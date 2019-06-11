@@ -2,7 +2,9 @@ package cn.sh.cares.dsp.message.auth;
 
 import javax.xml.bind.annotation.*;
 
-
+/**
+ * @author wangcj
+ */
 @XmlRootElement(name="Root",namespace = "loginauth")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"header","body"})

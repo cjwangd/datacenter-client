@@ -6,7 +6,10 @@ import cn.sh.cares.dsp.utils.StringUtil;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.util.Date;
 
-public class XMLDateAdapter extends XmlAdapter<String, Date> {
+/**
+ * @author wangcj
+ */
+public class XmlDateAdapter extends XmlAdapter<String, Date> {
 
 
     /**

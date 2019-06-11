@@ -3,31 +3,45 @@ package cn.sh.cares.dsp.utils;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ * @author wangcj
+ */
 
 public class HttpUtil {
 
-    public static String sendRequestXml(String url,String bodyXml) throws Exception {
+
+    private static Logger logger = Logger.getLogger(HttpUtil.class.getName());
+
+    private HttpUtil() {
+
+    }
+
+    public static String sendRequestXml(String url,String bodyXml) {
         Map<String,String> map = new HashMap<>(1);
         map.put("Content-Type", "application/xml;charset=UTF-8");
         return  sendHttp(url, bodyXml, map);
 
     }
 
-    public static String sendRequestJson(String url,String bodyJson) throws Exception {
+    public static String sendRequestJson(String url,String bodyJson) {
         Map<String,String> map = new HashMap<>(1);
         map.put("Content-Type", "application/json;charset=UTF-8");
         return  sendHttp(url, bodyJson, map);
     }
 
 
-    private static String sendHttp(String url, String body, Map<String, String> header) throws Exception {
+    private static String sendHttp(String url, String body, Map<String, String> header) {
         InputStream in = null;
         String result = "";
         HttpURLConnection connection = null;
 
-        try {
+        try(ByteArrayOutputStream bs = new ByteArrayOutputStream();) {
 
             URL httpUrl = new URL(url);
 
@@ -47,13 +61,14 @@ public class HttpUtil {
             connection.setDoOutput(true);
             connection.setDoInput(true);
             connection.setUseCaches(false);
-            connection.getOutputStream().write(body.getBytes("utf-8"));
+            connection.getOutputStream().write(body.getBytes(StandardCharsets.UTF_8));
             connection.getOutputStream().flush();
 
-            if (connection.getResponseCode() == 200) {
+            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
                 in = connection.getInputStream();
 
-                ByteArrayOutputStream bs = new ByteArrayOutputStream();
+
                 int n = 0;
                 byte[] datas = new byte[2048];
 
@@ -62,25 +77,26 @@ public class HttpUtil {
                 }
 
                 bs.flush();
-                result = new String(bs.toByteArray(), "utf-8");
+                result = new String(bs.toByteArray(), StandardCharsets.UTF_8);
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
+            logger.log(Level.SEVERE, "", ex);
         } finally {
             try {
                 if (in != null) {
                     in.close();
                 }
             } catch (IOException ex) {
-                ex.printStackTrace();
-                return null;
+                logger.log(Level.SEVERE, "", ex);
             }
 
             try {
-                connection.disconnect();
+                if (null != connection) {
+                    connection.disconnect();
+                }
+
             } catch (Exception ex) {
-                return null;
+                logger.log(Level.SEVERE, "", ex);
             }
         }
 

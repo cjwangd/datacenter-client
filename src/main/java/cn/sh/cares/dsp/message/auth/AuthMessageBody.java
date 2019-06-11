@@ -5,7 +5,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
-
+/**
+ * @author wangcj
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"code","message","token","userName","passWord","ip"})
 public class AuthMessageBody {

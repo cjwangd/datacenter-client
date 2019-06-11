@@ -5,6 +5,9 @@ import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.CollapsedStringAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * @author wangcj
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
     "operate",
@@ -17,8 +20,8 @@ public class Item {
     @XmlJavaTypeAdapter(CollapsedStringAdapter.class)
     @XmlSchemaType(name = "NCName")
     protected String operate;
-    @XmlElement(name = "DATA", required = true)
-    protected DATA data;
+    @XmlElement(name = "Data", required = true)
+    protected Data data;
 
 
     public String getOPERATE() {
@@ -29,11 +32,11 @@ public class Item {
         this.operate = value;
     }
 
-    public DATA getDATA() {
+    public Data getDATA() {
         return data;
     }
 
-    public void setDATA(DATA value) {
+    public void setDATA(Data value) {
         this.data = value;
     }
 

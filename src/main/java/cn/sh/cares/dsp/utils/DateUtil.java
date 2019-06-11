@@ -6,7 +6,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * @author wangcj
+ */
 public class DateUtil {
+    private DateUtil(){}
+
     private static final String DT_FMT_PATTERN = "yyyy-MM-dd HH:mm:ss";
     private static DateTimeFormatter dateTimeFormatter;
     static {

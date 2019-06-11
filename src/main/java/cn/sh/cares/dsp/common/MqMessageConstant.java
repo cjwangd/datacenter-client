@@ -1,38 +1,45 @@
 package cn.sh.cares.dsp.common;
 
+/**
+ * @author wangcj
+ */
 public class MqMessageConstant {
 
 
 	public class MsgType{
 
-		//订阅请求消息
+		private MsgType(){}
+
+		/** 订阅请求消息 */
 		public static final String SUBSCRIBE_REQUEST="subScribeRequest";
 
-		//订阅应答消息
+		/** 订阅应答消息 */
 		public static final String SUBSCRIBE_RESPONES="subScribeResponse";
 
 
-		//订阅取消请求消息
+		/** 订阅取消请求消息 */
 		public static final String SUBSCRIBE_C_REQUEST="subScribeCancelRequest";
 
-		//订阅取消应答消息
+		/** 订阅取消应答消息 */
 		public static final String SUBSCRIBE_C_RESPONES="subScribeCancelResponse";
 
 
 
-		//心跳请求消息
+		/** 心跳请求消息 */
 		public static final String HEARTBEAT_REQUEST="heartBeatRequest";
 
-		//心跳应答消息
+		/** 心跳应答消息 */
 		public static final String HEARTBEAT_RESPONES="heartBeatResponse";
 
 
-		//数据请求消息
+		/** 数据请求消息 */
 		public static final String DATA_REQUEST="dataRequest";
 
-		//数据应答消息
+		/** 数据应答消息 */
 		public static final String DATA_RESPONES="dataResponse";
 
+		/** 无数据  应答消息 */
+		public static final String NO_DATA_RESPONSE = "noDataResponse";
 
 
 
@@ -40,6 +47,10 @@ public class MqMessageConstant {
 
 
 	public class DataType{
+
+		private DataType() {
+
+		}
 
 		public static final String SIMS_SCS = "simsScs";
 
@@ -61,10 +72,14 @@ public class MqMessageConstant {
 
 	public class SubscribeStaus{
 
-		//初始化
+		private SubscribeStaus() {
+
+		}
+
+		/** 初始化 */
 		public static final String INIT = "0";
 
-		//准备接受
+		/** 准备接受 */
 		public static final String ACCEPT = "1";
 
 	}
@@ -102,17 +117,19 @@ public class MqMessageConstant {
 	 */
 	public enum Participate {
 
-		DATACENTER(SENDSYS_CODE)
-		;
+		/**
+		 * 数据共享平台
+		 */
+		DATACENTER(SENDSYS_CODE);
 
 		Participate(String participate) {
-			this.participate = participate;
+			this.participateName = participate;
 		}
 
-		private String participate;
+		private String participateName;
 
-		public String getParticipate() {
-			return participate;
+		public String getParticipateName() {
+			return participateName;
 		}
 	}
 

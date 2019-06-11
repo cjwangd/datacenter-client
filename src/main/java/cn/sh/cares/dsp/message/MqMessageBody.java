@@ -2,10 +2,12 @@ package cn.sh.cares.dsp.message;
 
 import javax.xml.bind.annotation.*;
 
-
+/**
+ * @author wangcj
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"seqNum","dataType","status","list"})
-public class MqMessageBody<T> {
+public class MqMessageBody {
 
 	@XmlElement(name = "SeqNum")
 	private String seqNum;
