@@ -37,7 +37,6 @@ public class HttpUtil {
 
 
     private static String sendHttp(String url, String body, Map<String, String> header) {
-        InputStream in = null;
         String result = "";
         HttpURLConnection connection = null;
 
@@ -61,43 +60,30 @@ public class HttpUtil {
             connection.setDoOutput(true);
             connection.setDoInput(true);
             connection.setUseCaches(false);
-            connection.getOutputStream().write(body.getBytes(StandardCharsets.UTF_8));
-            connection.getOutputStream().flush();
+            try (OutputStream outputStream = connection.getOutputStream()){
+                outputStream.write(body.getBytes(StandardCharsets.UTF_8));
+                outputStream.flush();
+            }
+
 
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
-                in = connection.getInputStream();
+                try (InputStream in = connection.getInputStream()) {
+                    int n = 0;
+                    byte[] datas = new byte[2048];
 
+                    while ((n = in.read(datas)) != -1) {
+                        bs.write(datas, 0, n);
+                    }
 
-                int n = 0;
-                byte[] datas = new byte[2048];
-
-                while ((n = in.read(datas)) != -1) {
-                    bs.write(datas, 0, n);
+                    bs.flush();
                 }
-
-                bs.flush();
                 result = new String(bs.toByteArray(), StandardCharsets.UTF_8);
             }
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "", ex);
         } finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "", ex);
-            }
-
-            try {
-                if (null != connection) {
-                    connection.disconnect();
-                }
-
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "", ex);
-            }
+            connection.disconnect();
         }
 
         return result;

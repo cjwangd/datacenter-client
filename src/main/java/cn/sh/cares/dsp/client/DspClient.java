@@ -19,6 +19,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
+import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
@@ -189,7 +190,7 @@ public class DspClient {
     }
 
 
-    private void sendRequest(String request) throws Exception {
+    private void sendRequest(String request) throws JAXBException {
         String resp = HttpUtil.sendRequestXml(url, request);
 
         if (StringUtil.isEmpty(resp)) {
@@ -308,12 +309,18 @@ public class DspClient {
                     }
                     sendRequest(msg);
                     Thread.sleep(datareqInteval);
-                } catch (SocketTimeoutException | SocketException se) {
+                }catch (Exception ex) {
+
                     logger.severe("数据线程异常");
-                    synchronized (DspClient.class) {
-                        datareqInteval = 180000L;
+
+                    if(ex instanceof SocketTimeoutException
+                            || ex instanceof SocketException
+                            || ex instanceof ConnectException){
+                        synchronized (DspClient.class) {
+                            datareqInteval = 180000L;
+                        }
                     }
-                } catch (Exception ex) {
+
                     logger.log(Level.SEVERE, "数据线程异常", ex);
                 }
             }
@@ -525,7 +532,7 @@ public class DspClient {
      * @param jsonbody 请求参数
      * @return json格式字符串
      */
-    public String getApiData(String jsonbody) throws Exception {
+    public String getApiData(String jsonbody) {
 
         String apiUrl;
         if (url.endsWith(URL_SEP_CHAR)) {

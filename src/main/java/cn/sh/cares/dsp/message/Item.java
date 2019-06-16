@@ -24,19 +24,19 @@ public class Item {
     protected Data data;
 
 
-    public String getOPERATE() {
+    public String getOperate() {
         return operate;
     }
 
-    public void setOPERATE(String value) {
+    public void setOperate(String value) {
         this.operate = value;
     }
 
-    public Data getDATA() {
+    public Data getData() {
         return data;
     }
 
-    public void setDATA(Data value) {
+    public void setData(Data value) {
         this.data = value;
     }
 
