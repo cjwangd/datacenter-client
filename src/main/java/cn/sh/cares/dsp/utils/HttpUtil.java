@@ -26,7 +26,6 @@ public class HttpUtil {
         Map<String,String> map = new HashMap<>(1);
         map.put("Content-Type", "application/xml;charset=UTF-8");
         return  sendHttp(url, bodyXml, map);
-
     }
 
     public static String sendRequestJson(String url,String bodyJson) {
@@ -34,7 +33,6 @@ public class HttpUtil {
         map.put("Content-Type", "application/json;charset=UTF-8");
         return  sendHttp(url, bodyJson, map);
     }
-
 
     private static String sendHttp(String url, String body, Map<String, String> header) {
         String result = "";
@@ -50,21 +48,18 @@ public class HttpUtil {
             connection.setRequestProperty("connection", "Keep-Alive");
             connection.setRequestProperty("user-agent","DSP-CLIENT");
             connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setUseCaches(false);
 
             for (Map.Entry<String,String> entry : header.entrySet()) {
                 connection.setRequestProperty(entry.getKey(),entry.getValue());
             }
 
-
-
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
-            connection.setUseCaches(false);
             try (OutputStream outputStream = connection.getOutputStream()){
                 outputStream.write(body.getBytes(StandardCharsets.UTF_8));
                 outputStream.flush();
             }
-
 
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
