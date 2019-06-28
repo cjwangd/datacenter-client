@@ -66,10 +66,16 @@ public class DspClient {
 
 
     /**
-     * 心跳间隔
+     * 默认心跳间隔
      */
     private Long hearbeatInteval = 60000L;
+    /**
+     * 最小心跳间隔
+     */
     private static Long hearbeatIntevalMin = 60000L;
+    /**
+     * 最大心跳间隔
+     */
     private static Long hearbeatIntevalMax = 600000L;
 
     /**
@@ -138,6 +144,10 @@ public class DspClient {
 
         if (hearbeatInteval < hearbeatIntevalMin || hearbeatInteval > hearbeatIntevalMax) {
             hearbeatInteval = 60000L;
+        }
+
+        if (datareqInteval > 5000L || datareqInteval < 100L) {
+            datareqInteval = 5000L;
         }
     }
 
@@ -232,13 +242,13 @@ public class DspClient {
 
                 } else {
                     synchronized (DspClient.class) {
-                        this.datareqInteval = 20000L;
+                        this.datareqInteval = 5000L;
                     }
                 }
                 break;
             case MqMessageConstant.MsgType.NO_DATA_RESPONSE:
                 synchronized (DspClient.class) {
-                    this.datareqInteval = 20000L;
+                    this.datareqInteval = 5000L;
                 }
                 break;
             case MqMessageConstant.MsgType.HEARTBEAT_RESPONES:
@@ -309,13 +319,13 @@ public class DspClient {
                     }
                     sendRequest(msg);
                     Thread.sleep(datareqInteval);
-                }catch (Exception ex) {
+                } catch (Exception ex) {
 
                     logger.severe("数据线程异常");
 
-                    if(ex instanceof SocketTimeoutException
+                    if (ex instanceof SocketTimeoutException
                             || ex instanceof SocketException
-                            || ex instanceof ConnectException){
+                            || ex instanceof ConnectException) {
                         synchronized (DspClient.class) {
                             datareqInteval = 180000L;
                         }
@@ -358,8 +368,12 @@ public class DspClient {
         return datatypes;
     }
 
-    public void setDatatypes(String datatypes) {
-        this.datatypes = datatypes;
+    public Long getHearbeatInteval() {
+        return hearbeatInteval;
+    }
+
+    public void setHearbeatInteval(Long hearbeatInteval) {
+        this.hearbeatInteval = hearbeatInteval;
     }
 
     public String getUsername() {
@@ -392,6 +406,18 @@ public class DspClient {
 
     public void setMsgResolver(IMsgResolver msgResolver) {
         this.msgResolver = msgResolver;
+    }
+
+    public void setDatatypes(String datatypes) {
+        this.datatypes = datatypes;
+    }
+
+    public Long getDatareqInteval() {
+        return datareqInteval;
+    }
+
+    public void setDatareqInteval(Long datareqInteval) {
+        this.datareqInteval = datareqInteval;
     }
 
     /**
@@ -464,7 +490,7 @@ public class DspClient {
                 .sendTime(new Date())
                 .sender(sysCode)
                 .token(token)
-                .dataType(this.datatypes)
+                .dataType(datatypes)
                 .build();
 
         try {
@@ -560,7 +586,6 @@ public class DspClient {
         @Override
         public void run() {
             if (subscribed) {
-
                 unsubscribe();
                 logger.info("发送取消订阅成功");
             }
