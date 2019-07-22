@@ -133,7 +133,7 @@ public class DspClient {
         }
 
         if (StringUtil.isEmpty(password)) {
-            logger.severe("接入密码能为空");
+            logger.severe("接入密码不能为空");
             System.exit(-1);
         }
 
@@ -146,8 +146,8 @@ public class DspClient {
             hearbeatInteval = 60000L;
         }
 
-        if (datareqInteval > 5000L || datareqInteval < 100L) {
-            datareqInteval = 5000L;
+        if (datareqInteval > 5000L || datareqInteval < 1000L) {
+            datareqInteval = 1000L;
         }
     }
 
@@ -242,13 +242,13 @@ public class DspClient {
 
                 } else {
                     synchronized (DspClient.class) {
-                        this.datareqInteval = 5000L;
+                        this.datareqInteval = 1000L;
                     }
                 }
                 break;
             case MqMessageConstant.MsgType.NO_DATA_RESPONSE:
                 synchronized (DspClient.class) {
-                    this.datareqInteval = 5000L;
+                    this.datareqInteval = 1000L;
                 }
                 break;
             case MqMessageConstant.MsgType.HEARTBEAT_RESPONES:
