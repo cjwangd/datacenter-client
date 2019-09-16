@@ -25,4 +25,7 @@ public class List {
         return this.item;
     }
 
+    public void setItem(java.util.List<Item> item) {
+        this.item = item;
+    }
 }

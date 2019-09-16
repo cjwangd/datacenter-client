@@ -20,7 +20,7 @@ public class Item {
     @XmlJavaTypeAdapter(CollapsedStringAdapter.class)
     @XmlSchemaType(name = "NCName")
     protected String operate;
-    @XmlElement(name = "Data", required = true)
+    @XmlElement(name = "DATA", required = true)
     protected Data data;
 
 

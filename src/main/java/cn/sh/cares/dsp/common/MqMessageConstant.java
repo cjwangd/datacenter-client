@@ -42,6 +42,16 @@ public class MqMessageConstant {
 		public static final String NO_DATA_RESPONSE = "noDataResponse";
 
 
+		//数据接入心跳请求消息
+		public static final String DATAIN_HEARTBEAT_REQUEST="dataInHeartBeatRequest";
+		public static final String DATAIN_HEARTBEAT_RESPONSE="dataInHeartBeatResponse";
+
+
+		//数据到达
+		public static final String DATA_ARRIVAL_REQUEST="dataArrivalRequest";
+		public static final String DATA_ARRIVAL_RESPONSE="dataArrivalResponse";
+
+
 
 	}
 

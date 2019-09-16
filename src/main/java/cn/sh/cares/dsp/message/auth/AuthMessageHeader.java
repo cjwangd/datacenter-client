@@ -23,7 +23,9 @@ public class AuthMessageHeader {
 	 
 	@XmlElement(name = "Receiver")
 	private String receiver;
-	 
+
+	@XmlElement(name = "AuthType")
+	private String authType;
 
 
 	public String getSender() {
@@ -52,7 +54,12 @@ public class AuthMessageHeader {
 		this.receiver = receiver;
 	}
 
+	public String getAuthType() {
+		return authType;
+	}
 
-
+	public void setAuthType(String authType) {
+		this.authType = authType;
+	}
 }
 
