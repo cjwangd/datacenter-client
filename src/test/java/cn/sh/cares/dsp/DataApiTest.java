@@ -17,7 +17,7 @@ public class DataApiTest {
                 .syscode("TESTCYW")
                 .url("http://172.28.31.101:9066/dsp/services")
                 .heartBeatInterval(50000L)
-                .dataInteval(1000L)
+                .dataInterval(1000L)
                 .datatypes("jkFlight")
                 .logEnabled(true)
                 .msgResolver(new IMsgResolver() {

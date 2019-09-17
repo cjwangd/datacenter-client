@@ -58,7 +58,7 @@ public abstract class AbstractDspClient {
     protected static Long hearbeatIntevalMax = 600000L;
 
     protected static Long dataIntervalMax = 5000L;
-    protected static Long dataIntervalMin = 1000L;
+    protected static Long dataIntervalMin = 100L;
 
     protected static String DSP_CLIENT_URL = "";
     protected static String DSP_CLIENT_LOGIN_URL = "";

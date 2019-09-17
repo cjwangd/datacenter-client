@@ -43,7 +43,7 @@ public class DspClientFactoryBuilder {
         return this;
     }
 
-    public  DspClientFactoryBuilder dataInteval(Long dataInteval) {
+    public  DspClientFactoryBuilder dataInterval(Long dataInteval) {
         dspClientProperty.setDatareqInteval(dataInteval);
         return this;
     }
