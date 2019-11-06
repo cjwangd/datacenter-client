@@ -57,7 +57,7 @@ public class DataSaveClient extends AbstractDspClient {
     }
 
     @Override
-    protected void login() {
+    public void login() {
         super.login();
         loginReq.getHeader().setAuthType("DATAIN");
         doLogin();

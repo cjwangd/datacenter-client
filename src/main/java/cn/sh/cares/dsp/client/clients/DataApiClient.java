@@ -26,7 +26,7 @@ public class DataApiClient extends AbstractDspClient {
     }
 
     @Override
-    protected void login() {
+    public void login() {
         super.login();
         doLogin();
     }

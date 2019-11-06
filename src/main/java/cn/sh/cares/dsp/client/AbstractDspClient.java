@@ -69,8 +69,9 @@ public abstract class AbstractDspClient {
 
     private static AtomicLong atomicLong = new AtomicLong(1);
 
-    private static BlockingQueue<Runnable> blockingQueue = new LinkedBlockingDeque<>(100);
-    protected static ExecutorService executorService = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), 100, 60,
+    private static SynchronousQueue<Runnable> blockingQueue = new SynchronousQueue<Runnable>();
+    protected static ExecutorService executorService = new ThreadPoolExecutor(
+            Runtime.getRuntime().availableProcessors(), 100, 60,
             TimeUnit.MINUTES, blockingQueue, r -> {
         Thread thread = new Thread(r);
         thread.setName("DSP::CLIENT" + atomicLong.getAndIncrement());
@@ -91,7 +92,8 @@ public abstract class AbstractDspClient {
         classes.add(cn.sh.cares.dsp.message.List.class);
         try {
             jaxbContext = JAXBContext.newInstance(classes.toArray(new Class[classes.size()]));
-            jaxbContextAuth = JAXBContext.newInstance(AuthMessage.class, AuthMessageHeader.class, AuthMessageBody.class);
+            jaxbContextAuth = JAXBContext.newInstance(AuthMessage.class,
+                    AuthMessageHeader.class, AuthMessageBody.class);
         } catch (JAXBException e) {
             e.printStackTrace();
         }
@@ -138,7 +140,7 @@ public abstract class AbstractDspClient {
     /**
      * 登录
      */
-    protected void login() {
+    public void login() {
         if (StringUtil.isNotEmpty(dspClientProperty.getToken())) {
             return;
         }
@@ -153,7 +155,7 @@ public abstract class AbstractDspClient {
         login();
     }
 
-    public Object fromXml(String xml, Unmarshaller unmarshaller) {
+    public synchronized Object fromXml(String xml, Unmarshaller unmarshaller) {
         Object o = null;
         try {
             o = unmarshaller.unmarshal(
@@ -165,7 +167,7 @@ public abstract class AbstractDspClient {
         return o;
     }
 
-    public String toXml(Object o, Marshaller marshaller) {
+    public synchronized String toXml(Object o, Marshaller marshaller) {
 
         String ret = null;
         StringWriter writer = new StringWriter();
@@ -326,10 +328,8 @@ public abstract class AbstractDspClient {
                     Thread.sleep(dspClientProperty.getDatareqInteval());
                 }
             });
-
         }
     }
-
 
 }
 

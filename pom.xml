@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.sh.cares</groupId>
     <artifactId>dsp-client</artifactId>
-    <version>3.0.0.RELEASE</version>
+    <version>3.0.1.RELEASE</version>
     <name>dsp-client</name>
     <description>数据共享平台JAVA客户端</description>
 
@@ -88,7 +88,7 @@
                 </configuration>
             </plugin>
 
-          <!--  <plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.6</version>
@@ -101,7 +101,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
 
             <!--配置生成Javadoc包-->
             <plugin>
