@@ -60,8 +60,8 @@ public abstract class AbstractDspClient {
     protected static Long dataIntervalMax = 5000L;
     protected static Long dataIntervalMin = 100L;
 
-    protected static String DSP_CLIENT_URL = "";
-    protected static String DSP_CLIENT_LOGIN_URL = "";
+    protected  String DSP_CLIENT_URL = "";
+    protected  String DSP_CLIENT_LOGIN_URL = "";
 
     protected AuthMessage loginReq;
     protected MqMessage heartMsg;
@@ -92,8 +92,7 @@ public abstract class AbstractDspClient {
         classes.add(cn.sh.cares.dsp.message.List.class);
         try {
             jaxbContext = JAXBContext.newInstance(classes.toArray(new Class[classes.size()]));
-            jaxbContextAuth = JAXBContext.newInstance(AuthMessage.class,
-                    AuthMessageHeader.class, AuthMessageBody.class);
+            jaxbContextAuth = JAXBContext.newInstance(AuthMessage.class, AuthMessageHeader.class, AuthMessageBody.class);
         } catch (JAXBException e) {
             e.printStackTrace();
         }
@@ -140,7 +139,7 @@ public abstract class AbstractDspClient {
     /**
      * 登录
      */
-    public void login() {
+    protected void login() {
         if (StringUtil.isNotEmpty(dspClientProperty.getToken())) {
             return;
         }
@@ -328,8 +327,10 @@ public abstract class AbstractDspClient {
                     Thread.sleep(dspClientProperty.getDatareqInteval());
                 }
             });
+
         }
     }
+
 
 }
 
