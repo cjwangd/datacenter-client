@@ -25,7 +25,7 @@ public class DataInTest {
                 .password("123456")
                 .syscode("abs")
                 .url("http://172.28.31.1:9066/dsp/services")
-                .heartBeatInterval(50000L)
+                .heartBeatInterval(2000L)
                 .dataInterval(1000L)
                 .classesInput(classes)  // 数据接入必须参数
                 .datatypes("userdatatest")

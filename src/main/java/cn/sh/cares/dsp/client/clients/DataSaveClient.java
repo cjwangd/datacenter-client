@@ -26,10 +26,11 @@ public class DataSaveClient extends AbstractDspClient {
 
     public DataSaveClient(DspClientProperty dspClientProperty) {
         super(dspClientProperty);
+        DSP_CLIENT_URL = dspClientProperty.getUrl();
         if (dspClientProperty.getUrl().endsWith(URL_SEP_CHAR)) {
-            DSP_CLIENT_URL = dspClientProperty.getUrl() + DSP_DATAIN_URL;
+            DSP_CLIENT_DATASAVE_URL = dspClientProperty.getUrl() + DSP_DATAIN_URL;
         } else {
-            DSP_CLIENT_URL = dspClientProperty.getUrl() + URL_SEP_CHAR+ DSP_DATAIN_URL;
+            DSP_CLIENT_DATASAVE_URL = dspClientProperty.getUrl() + URL_SEP_CHAR+ DSP_DATAIN_URL;
         }
         classes.addAll(dspClientProperty.getClassesInput());
         try {
@@ -94,7 +95,7 @@ public class DataSaveClient extends AbstractDspClient {
         if (dspClientProperty.isLogEnabled()) {
             logger.log(Level.INFO,"接入数据存储请求{0}",req);
         }
-        String resp = HttpUtil.putXml(DSP_CLIENT_URL, req);
+        String resp = HttpUtil.putXml(DSP_CLIENT_DATASAVE_URL, req);
         processReturnMsg(resp);
     }
 }

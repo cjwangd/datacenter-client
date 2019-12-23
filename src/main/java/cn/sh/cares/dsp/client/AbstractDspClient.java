@@ -62,6 +62,7 @@ public abstract class AbstractDspClient {
 
     protected  String DSP_CLIENT_URL = "";
     protected  String DSP_CLIENT_LOGIN_URL = "";
+    protected  String DSP_CLIENT_DATASAVE_URL = "";
 
     protected AuthMessage loginReq;
     protected MqMessage heartMsg;
