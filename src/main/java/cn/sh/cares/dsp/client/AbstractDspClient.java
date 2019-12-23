@@ -306,6 +306,7 @@ public abstract class AbstractDspClient {
             executorService.submit(() -> {
                 while (true) {
                     createContext();
+                    heartMsg.getHeader().setToken(dspClientProperty.getToken());
                     String resp = HttpUtil.sendRequestXml(DSP_CLIENT_URL, toXml(heartMsg, marshaller));
                     processReturnMsg(resp);
                     Thread.sleep(dspClientProperty.getHearbeatInteval());
@@ -322,6 +323,7 @@ public abstract class AbstractDspClient {
             executorService.submit(() -> {
                 while (true) {
                     createContext();
+                    dataMsg.getHeader().setToken(dspClientProperty.getToken());
                     String resp = HttpUtil.sendRequestXml(DSP_CLIENT_URL, toXml(dataMsg, marshaller));
                     processReturnMsg(resp);
                     Thread.sleep(dspClientProperty.getDatareqInteval());

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.sh.cares</groupId>
     <artifactId>dsp-client</artifactId>
-    <version>3.0.2.RELEASE</version>
+    <version>3.0.3.RELEASE</version>
     <name>dsp-client</name>
     <description>数据共享平台JAVA客户端</description>
 

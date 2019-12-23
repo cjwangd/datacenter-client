@@ -5,11 +5,17 @@ import cn.sh.cares.dsp.client.DspClientProperty;
 import cn.sh.cares.dsp.common.MqMessageConstant;
 import cn.sh.cares.dsp.message.MqMessage;
 import cn.sh.cares.dsp.message.MqMessageBuilder;
+import cn.sh.cares.dsp.utils.FileUtils;
 import cn.sh.cares.dsp.utils.HttpUtil;
 import cn.sh.cares.dsp.utils.StringUtil;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * 数据共享客户端
  * @author wangcj
@@ -70,9 +76,9 @@ public class DataShareClient extends AbstractDspClient {
 
         executorService.submit(new HeartBeatTimer());
         executorService.submit(new DataTimer());
+        FileUtils.saveSubscribe(dspClientProperty.getDatatypes());
 
     }
-
 
 
     /**
@@ -112,13 +118,30 @@ public class DataShareClient extends AbstractDspClient {
         if (StringUtil.isEmpty(dspClientProperty.getToken())) {
             return false;
         }
+
+        String last = FileUtils.readSubscribe();
+        if (null == last || "".equals(last)) {
+            return true;
+        }
+
+        Set<String> ls = new HashSet<>(10);
+        Set<String> now = new HashSet<>(10);
+        Stream.of(last.split(",")).forEach(e->ls.add(e));
+        Stream.of(dspClientProperty.getDatatypes().split(",")).forEach(e->ls.add(e));
+
+        String unsub = ls.stream().filter(s -> !now.contains(s)).collect(Collectors.joining(","));
+
+        if ("".equals(unsub) || null == unsub) {
+            return true;
+        }
+
         MqMessage subs = new MqMessageBuilder()
                 .msgType(MqMessageConstant.MsgType.SUBSCRIBE_C_REQUEST)
                 .receiver(MqMessageConstant.Participate.DATACENTER.getParticipateName())
                 .sendTime(new Date())
                 .sender(dspClientProperty.getSysCode())
                 .token(dspClientProperty.getToken())
-                .dataType(dspClientProperty.getDatatypes())
+                .dataType(unsub)
                 .build();
 
         try {

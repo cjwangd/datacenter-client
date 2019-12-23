@@ -2,6 +2,10 @@ package cn.sh.cares.dsp.utils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author wangcj
@@ -12,9 +16,7 @@ public class FileUtils {
 
     public synchronized static void saveSubscribe(String dataTypes){
         File f = new File(SUBS_FILE_NAME);
-        if (!f.canWrite()) {
-            return;
-        }
+
         try (FileOutputStream fileOutputStream = new FileOutputStream(f)) {
             fileOutputStream.write(dataTypes.getBytes(StandardCharsets.UTF_8));
             fileOutputStream.flush();
@@ -44,10 +46,5 @@ public class FileUtils {
             e.printStackTrace();
         }
         return null;
-    }
-
-    public static void main(String[] args) {
-        saveSubscribe("flight");
-        System.out.println(readSubscribe());
     }
 }
