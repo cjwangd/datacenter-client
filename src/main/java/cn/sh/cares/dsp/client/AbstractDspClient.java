@@ -308,8 +308,13 @@ public abstract class AbstractDspClient {
                 while (true) {
                     createContext();
                     heartMsg.getHeader().setToken(dspClientProperty.getToken());
-                    String resp = HttpUtil.sendRequestXml(DSP_CLIENT_URL, toXml(heartMsg, marshaller));
-                    processReturnMsg(resp);
+                    try {
+                        String resp = HttpUtil.sendRequestXml(DSP_CLIENT_URL, toXml(heartMsg, marshaller));
+                        processReturnMsg(resp);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
                     Thread.sleep(dspClientProperty.getHearbeatInteval());
                 }
             });
@@ -325,8 +330,12 @@ public abstract class AbstractDspClient {
                 while (true) {
                     createContext();
                     dataMsg.getHeader().setToken(dspClientProperty.getToken());
-                    String resp = HttpUtil.sendRequestXml(DSP_CLIENT_URL, toXml(dataMsg, marshaller));
-                    processReturnMsg(resp);
+                    try {
+                        String resp = HttpUtil.sendRequestXml(DSP_CLIENT_URL, toXml(dataMsg, marshaller));
+                        processReturnMsg(resp);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     Thread.sleep(dspClientProperty.getDatareqInteval());
                 }
             });
