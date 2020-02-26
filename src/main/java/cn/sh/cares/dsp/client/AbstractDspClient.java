@@ -208,7 +208,12 @@ public abstract class AbstractDspClient {
             return;
         }
 
-        switch (mqMessage.getHeader().getMsgType()) {
+        String msgtype = mqMessage.getHeader().getMsgType();
+        if ("".equals(msgtype) || null == msgtype) {
+            return;
+        }
+
+        switch (msgtype) {
             case MqMessageConstant.MsgType.DATA_RESPONES:
 
                 if (Optional.ofNullable(mqMessage.getBody().getList().getItem()).isPresent()) {

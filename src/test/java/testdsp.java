@@ -8,9 +8,9 @@ public class testdsp {
         DspClientFactoryBuilder dspClientFactoryBuilder = new DspClientFactoryBuilder();
         DataShareClient dspClient = dspClientFactoryBuilder
                
-        		.username("UserDevTest")
-                .password("test123!")
-                .syscode("SysDevTest")
+        		.username("KY")
+                .password("123456")
+                .syscode("TESTKY")
                /* 
         		.username("caiyw")
                 .password("123456")
